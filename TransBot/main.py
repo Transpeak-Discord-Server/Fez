@@ -12,8 +12,7 @@ from shared.utils.misc import shared_error
 class TransBot(commands.Bot):
 
     bot_cogs: List[str] = [
-        # '.cogs.ban',
-        # '.cogs.
+        '.cogs.ban'
     ]
 
     async def setup_hook(self) -> None:
