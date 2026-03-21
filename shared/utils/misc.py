@@ -1,4 +1,5 @@
-import discord
+class HasId(Protocol):
+    id: int
 
-def get_role_ids(roles: discord.member.Member.roles):
-    return [role.id for role in roles]
+def get_ids(items: Iterable[HasId]):
+    return [item.id for item in items]
