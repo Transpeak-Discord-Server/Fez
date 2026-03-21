@@ -8,8 +8,7 @@ from shared.utils.permissions import UserPermissionsError
 class TransBot(commands.Bot):
 
     cogs = [
-        # '.cogs.ban',
-        # '.cogs.
+        '.cogs.ban'
     ]
 
     async def setup_hook(self):
