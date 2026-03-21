@@ -5,10 +5,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from shared.utils.permissions import UserPermissionsError
 
+from shared.utils.permissions import UserPermissionsError
+
 class TransBot(commands.Bot):
 
     cogs = [
-
+        'cogs.ban'
     ]
 
     async def setup_hook(self):
