@@ -4,10 +4,12 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+from shared.utils.permissions import UserPermissionsError
+
 class TransBot(commands.Bot):
 
     cogs = [
-
+        'cogs.ban'
     ]
 
     async def setup_hook(self):
@@ -17,6 +19,15 @@ class TransBot(commands.Bot):
 
     async def on_ready(self):
         print(f'{self.user} has finished booting.')
+
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            return
+        if isinstance(error, UserPermissionsError):
+            if error.required_perms == "new":
+                ctx.reply("You need to be registered to do that! Please ping a staff member for help.")
+            else:
+                ctx.reply(f"You need to be a {error.required_perms} to do that!")
 
 class Main:
 

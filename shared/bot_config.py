@@ -336,12 +336,6 @@ rl_id = {
     'streamer': 1099545190227771504,
 }
 
-staff_rl_id = [
-    rl_id['*'],
-    rl_id['a-director'],
-    rl_id['-']
-]
-
 
 reg_rl_id = {
     'genderfluid': 123084880421584897,
