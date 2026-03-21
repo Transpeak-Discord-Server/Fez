@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 class TransBot(commands.Bot):
 
     cogs = [
-        "cogs.ban",
+
     ]
 
     async def setup_hook(self):
