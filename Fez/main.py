@@ -5,9 +5,6 @@ from pathlib import Path
 from discord.ext import commands
 from dotenv import load_dotenv
 
-# allows Fez to access the shared folder (e.g. `from shared import helper_funcs`)
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 class Fez(commands.Bot):
 
     cogs = [
