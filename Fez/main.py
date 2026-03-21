@@ -10,7 +10,6 @@ from shared.utils.misc import shared_error
 
 
 
-
 class Fez(commands.Bot):
 
     bot_cogs = [
