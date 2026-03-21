@@ -1,20 +1,41 @@
 import discord
-
 import os
+import sys
 from pathlib import Path
-
-fez_dir = Path(__file__).resolve().parent
-
-# Environment variables
+from discord.ext import commands
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=fez_dir / '..' / '.env')
 
-class Client(discord.Client):
+# allows Fez to access the shared folder (e.g. `from shared import helper_funcs`)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+class Fez(commands.Bot):
+
+    cogs = [
+
+    ]
+
+    async def setup_hook(self):
+        for cog in self.cogs:
+            await self.load_extension(cog)
+            print(f"Loaded cog: {cog}")
+
     async def on_ready(self):
         print(f'{self.user} has finished booting.')
 
-intents = discord.Intents.default()
+class Main:
+    FEZ_DIR = Path(__file__).resolve().parent
 
-client = Client(intents=intents)
-client.run(os.getenv("FEZ_TOKEN"))
+    def run(self):
+        load_dotenv(dotenv_path=self.FEZ_DIR / '..' / '.env')
 
+        intents = discord.Intents.default()
+
+        token = os.getenv("FEZ_TOKEN")
+        if not token:
+            raise ValueError("Fez token not found in .env file.")
+
+        client = Fez(intents=intents, command_prefix='!')
+        client.run(token)
+
+if __name__ == "__main__":
+    Main().run()
