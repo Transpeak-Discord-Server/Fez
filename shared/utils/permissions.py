@@ -54,7 +54,7 @@ class UserPermissionsError(commands.CheckFailure):
 
 
 def has_permission(member: Member, permission_level: Level) -> bool:
-    user_roles = set(misc.get_role_ids(member.roles))
+    user_roles = set(misc.get_ids(member.roles))
     staff_roles = set(PermissionManager.get_roles(permission_level))
     return not user_roles.isdisjoint(staff_roles)
 

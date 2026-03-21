@@ -1,10 +1,11 @@
+class HasId(Protocol):
+    id: int
 from functools import singledispatch
 
-import discord
 from datetime import datetime
 
-def get_role_ids(roles: discord.member.Member.roles) -> list[int]:
-    return [role.id for role in roles]
+def get_ids(items: Iterable[HasId]):
+    return [item.id for item in items]
 
 
 # format time
