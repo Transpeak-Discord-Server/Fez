@@ -5,7 +5,6 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from shared.utils.permissions import UserPermissionsError
 
-
 class Fez(commands.Bot):
 
     cogs = [
