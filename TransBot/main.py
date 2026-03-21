@@ -3,7 +3,6 @@ from discord.ext import commands
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-
 from shared.utils.permissions import UserPermissionsError
 
 class TransBot(commands.Bot):
