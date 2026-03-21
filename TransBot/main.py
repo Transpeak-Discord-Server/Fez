@@ -1,12 +1,8 @@
 import discord
 from discord.ext import commands
 import os
-import sys
 from pathlib import Path
 from dotenv import load_dotenv
-
-# allows TransBot to access the shared folder (e.g. `from shared import helper_funcs`)
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class TransBot(commands.Bot):
 
@@ -28,7 +24,7 @@ class Main:
 
     def run(self):
         load_dotenv(dotenv_path=self.TBOT_DIR / '..' / '.env')
-        intents = discord.Intents.default()
+        intents = discord.Intents.all()
 
         token = os.getenv("TBOT_TOKEN")
         if not token:
