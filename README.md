@@ -1,10 +1,6 @@
 # Fez
 Fez and TransBot Discord bots for the Transpeak Discord server.
 
-Fez: In `/Fez`, entry point: `Fez/main.py`
-
-TransBot: In `/TransBot`, entry point: `TransBot/main.py`
-
 ## Setup
 
 ### Windows
@@ -12,11 +8,11 @@ Windows users should use WSL and follow the instructions for Linux.
 
 ### Linux
 
-A setup.sh script is provided for convenience, however it will only work on Debian-based distros. You will still need to provide your own bot tokens.   
+There is a `setup.sh` script that will set up the project for you. You will still need to add the bot tokens to `.env`. The script only works on Debian-based distros.   
 
 1. Install system dependencies
 
-These commands are for Debian-based distros. Other distro users (Fedora, Arch, etc.) should check their distro's package manager
+(Debian-based distros)
 ```shell
 sudo apt update
 sudo apt install python3-venv
