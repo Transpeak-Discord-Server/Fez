@@ -19,7 +19,7 @@ class PermissionManager:
 
     _OWNER = [rl_id['owner']]
     _CO_OWNER = [rl_id['co-owner'], *_OWNER]
-    _ADMIN = [rl_id['*']]
+    _ADMIN = [rl_id['*'], *_CO_OWNER]
     _LEAD = [rl_id['a-director'], *_ADMIN]
     _STAFF = [rl_id['staff'], rl_id['staff-junior'], rl_id['on-leave'], rl_id['in-training'], rl_id['-'], *_LEAD]
     _HELPER = [rl_id['helper'], *_STAFF]
