@@ -1,5 +1,8 @@
 import discord
 from discord.ext import commands
+from shared.utils.permissions import permission_check, Level, has_permission
+from shared.utils.misc import getsavedroles
+from shared.bot_config import rl_id
 
 class Timeout(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -7,10 +10,21 @@ class Timeout(commands.Cog):
 
     @commands.command()
     async def timeout(self, ctx, args: str):
+        if not args:
+            return await ctx.reply("Please provide a user ID.")
+        
         user = ctx.guild.get_member(args)
 
         if user is None:
-            return await ctx.send() # Switch out with reply once you've gotten it to work & the file is set up
+            return await ctx.reply("No member found with that ID.")
+        
+        if any(role in [rl_id["staff"], rl_id["bot"], rl_id["staff-junior"]] for role in ctx.author.roles):
+            return await ctx.reply("No")
+        
+        timeout_id = 332937538648014848
+
+        if discord.utils.get(ctx.guild.roles(), id = timeout_id) in user.roles():
+            getsavedroles("")
 
 async def setup(bot):
     await bot.add_cog(Timeout(bot))
