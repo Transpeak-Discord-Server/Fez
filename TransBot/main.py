@@ -8,12 +8,13 @@ from shared.utils.permissions import UserPermissionsError
 class TransBot(commands.Bot):
 
     cogs = [
-
+        # '.cogs.ban',
+        # '.cogs.
     ]
 
     async def setup_hook(self):
         for cog in self.cogs:
-            await self.load_extension(cog)
+            await self.load_extension(cog, package=__package__)
             print(f"Loaded cog: {cog}")
 
     async def on_ready(self):
@@ -21,12 +22,12 @@ class TransBot(commands.Bot):
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
-            return
+            return None
         if isinstance(error, UserPermissionsError):
             if error.required_perms == "new":
-                ctx.reply("You need to be registered to do that! Please ping a staff member for help.")
-            else:
-                ctx.reply(f"You need to be a {error.required_perms} to do that!")
+                return ctx.reply("You need to be registered to do that! Please ping a staff member for help.")
+            return ctx.reply(f"You need to be a {error.required_perms} to do that!")
+        return print(error)
 
 class Main:
 
@@ -39,6 +40,8 @@ class Main:
         token = os.getenv("TBOT_TOKEN")
         if not token:
             raise ValueError("TransBot token not found in .env file.")
+
+        discord.utils.setup_logging()
 
         client = TransBot(intents=intents, command_prefix='!')
         client.run(token)

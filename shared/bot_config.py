@@ -1,3 +1,5 @@
+import os
+
 import discord
 
 server_id = 117664143837888519
@@ -194,6 +196,7 @@ vc_id = {
 # ordered by role.position
 rl_id = {
     'owner': 257362700835880961,
+    'co-owner': 361345382933987339,
     'founder': 257362700835880961,
     '*': 996603692826509402,
     'admin': 117873055362973702,
@@ -629,3 +632,51 @@ opt_channels = [
     'philosophy',
     'sports-fitness',
 ]
+
+PROJECT_PATH = os.path.join(os.path.dirname(__file__), '..')
+
+# Staff commands
+# Zoey
+
+ZOEY_DATA = {
+    'ZOEY_JOB_TITLES': ['Bakery', 'Undercover Operation', 'Blacksmithing Store', 'Mental Health Institution',
+                       'Designer Brand', 'Coaching Program', 'Writing Team', 'IT Team', 'Acting School',
+                       'Space Program', 'Management Department', 'Local Circus', 'Dancing Squad', 'Esports Team',
+                       'Woodworking Department', 'Secret Services', 'Backup Staff Team', 'Funeral Services',
+                       'Forgotten Staff Team', 'Public Transport', 'Nuclear Power Plant', 'Hair Styling Business',
+                       'Fight Club', 'Dog Shelter', 'Village', 'Stage Crew', 'Kitchen Crew', 'Bird Watchers',
+                       'CallCenter', 'Archeology Team', 'Abandoned City'],
+    'ZOEY_LOCATIONS': ['Tahiti', 'Amsterdam', 'Tilted Towers', 'The Nether', 'Walmart', 'The moon', 'Tok, Alaska',
+                      'The Dungeon', 'Disney Land', 'France', 'The Mushroom Kingdom', '221B Baker Street, London',
+                      'Prison', 'Stockholm, Sweden', 'The Royal Castle', 'Bowsers Castle', 'Hyrule', 'Space',
+                      'The Ranch', 'The Corner', 'The Principles Office', 'a random house in Belgium',
+                      'a different Time', 'an Airplane', 'a Sailboat', 'Insert Place Here', 'Karen Island',
+                      'the Jungle', 'the Underwater Prison', 'the Farm'],
+    'ZOEY_REACTION': ['(Gasp)', '(Wow)', '(No way)', '(Omg)', '(Shocking)', '(Not Clickbait)', '(Huh)', '(Haha)',
+                     '(Yippee)', '(Yay)', '(Finally)', '(Boohoo)', '(Noooo)', '(Oh shit)', '(Amazing)', '(Whimsy)',
+                     '(Based)', '(Cringe)', '(Pog)', '(Lmfao)', '(Why)', '(How)'],
+    'ZOEY_STRUCTURES': ['a Nether Fortress', 'the Gates to Hell', 'Narnia', 'an Ancient City', 'Atlantis',
+                       'the Forgotten Temple', 'the Lab', 'Pallet Town', 'a Giant Radio Tower', 'Planet 4546B',
+                       'a Pokemon Center', 'a Nether Portal', 'Beaver Hollow', "Freddy's Pizzeria",
+                       'a random Starbucks', 'Youtube HQ', 'another Universe', 'a new Solar System'],
+    'ZOEY_OBJECTS': ['Rats', 'Mangoes', 'Chairs', 'Coins', 'Rubber Ducks', 'Gaming PCs', 'Copies of The Sims 3',
+                    'Rolls of Toilet Paper', 'Keychains', 'Fidget Toys', 'Totems of Undying', 'Golden Scars', 'Candles',
+                    'Birthday Cards', 'Steam Gift Cards', 'Notebooks', 'HDMI Cables', 'Saddles', 'Plant Pots',
+                    'Hunting Knives', 'Apples', 'Korok Seeds', 'Water Bottles', 'Pieces of Cloth', 'First Aid Kits',
+                    'Arrows', 'Lego Sets', 'Bananas', 'Phone Cases', 'Broken Pencils', 'Pictures of Spider-Man',
+                    'Pokeballs', 'Frogs', 'Batteries', 'Screws', 'Shells', 'Snails', 'Jewels', 'Light Bulbs',
+                    'Mushrooms', 'Flashlights', 'Diamonds', 'Emeralds', 'Spirits', 'Potions', 'Headphones',
+                    'Shoe Laces', 'Keys', 'Tree Branches', 'Oak Logs', 'Pears'],
+    'ZOEY_CRIME': ['Tax Evasion', 'Shoplifting', 'Having Bad Vibes', 'Summoning a Demon', 'Robbing several banks',
+                  'Being bad at Fortnite', 'Being a silly goose', 'Giving cheese to pigeons', 'Stealing a stop sign',
+                  'Fighting a polar bear', 'Violating Company Policy', 'Creating a scene',
+                  'Leaving a 1 star review on Yelp', 'Waving too loud', 'Dancing', 'Using Discord',
+                  'Not liking KPOP Demon Hunters', 'Hacking', 'Cheating', 'Using Glitches', 'Speedrunning',
+                  'Building a house', 'Playing Minecraft', 'Baking Pancakes', 'Working during work hours', 'Sleeping',
+                  'Watching Youtube', 'Fighting crime', 'Filming in portrait mode',
+                  'A reason we cant share (we dont know either)', 'No reason at all', 'Being based',
+                  'Wearing glasses the wrong way', 'Not having 2FA enabled', 'Trying to bribe staff',
+                  'Leaking government documents', 'Starting a revolution', 'Creating a time machine',
+                  'Dropping a glass of water', 'Cleaning your room', 'Adopting 25 goldfish',
+                  'Betrayal against Transpeak', 'Playing Pokemon GO'],
+}

@@ -34,12 +34,14 @@ FEZ_TOKEN= [Fez's token]
 TBOT_TOKEN= [TransBot's token]
 ```
 5. Run it
+
+   (from the project root)
 * Fez
 ```shell
-python Fez/main.py
+python -m Fez.main
 ```
 * TransBot
 ```shell
-python TransBot/main.py
+python -m TransBot.main
 ```
 6. Hell yeah
