@@ -29,6 +29,7 @@ class Fez(commands.Bot):
         return print(error)
 
 
+
 class Main:
     FEZ_DIR = Path(__file__).resolve().parent
 
