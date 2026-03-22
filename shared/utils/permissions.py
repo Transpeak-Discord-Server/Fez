@@ -38,7 +38,7 @@ class PermissionManager:
     }
 
     @classmethod
-    def get_roles(cls, level: Level):
+    def get_roles(cls, level: Level) -> list[int]:
         return cls._MAPPING.get(level, [])
 
 
@@ -48,7 +48,7 @@ class UserPermissionsError(commands.CheckFailure):
         super().__init__(f"User tried to use a command for {required_perms.name}")
 
 
-def has_permission(member: Member, permission_level: Level):
+def has_permission(member: Member, permission_level: Level) -> bool:
     user_roles = set(misc.get_role_ids(member.roles))
     staff_roles = set(PermissionManager.get_roles(permission_level))
     return not user_roles.isdisjoint(staff_roles)

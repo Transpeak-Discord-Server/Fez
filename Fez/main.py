@@ -8,7 +8,7 @@ from shared.utils.permissions import UserPermissionsError
 class Fez(commands.Bot):
 
     cogs = [
-
+        'cogs.staff_commands',
     ]
 
     async def setup_hook(self):
