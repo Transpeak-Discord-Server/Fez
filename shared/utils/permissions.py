@@ -4,7 +4,7 @@ from shared.utils import misc
 import os
 import json
 CURRENT_PATH = os.path.dirname(__file__)
-with open(os.path.join(CURRENT_PATH, '../shared/bot_config.json')) as f:
+with open(os.path.join(CURRENT_PATH, '../bot_config.json')) as f:
     config = json.load(f)
 from enum import Enum
 
