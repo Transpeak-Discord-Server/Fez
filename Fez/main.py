@@ -13,7 +13,7 @@ class Fez(commands.Bot):
 
     async def setup_hook(self):
         for cog in self.cogs:
-            await self.load_extension(cog)
+            await self.load_extension(cog, package=__package__)
             print(f"Loaded cog: {cog}")
 
     async def on_ready(self):
@@ -27,6 +27,7 @@ class Fez(commands.Bot):
                 ctx.reply("You need to be registered to do that! Please ping a staff member for help.")
             else:
                 ctx.reply(f"You need to be a {error.required_perms} to do that!")
+
 
 class Main:
     FEZ_DIR = Path(__file__).resolve().parent
