@@ -28,6 +28,8 @@ class Fez(commands.Bot):
             return ctx.reply(f"You need to be a {error.required_perms} to do that!")
         return print(error)
 
+
+
 class Main:
     FEZ_DIR = Path(__file__).resolve().parent
 
