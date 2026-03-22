@@ -8,13 +8,13 @@ from shared.utils.permissions import UserPermissionsError
 class TransBot(commands.Bot):
 
     cogs = [
-        # 'cogs.ban',
-        # 'cogs.
+        # '.cogs.ban',
+        # '.cogs.
     ]
 
     async def setup_hook(self):
         for cog in self.cogs:
-            await self.load_extension(cog)
+            await self.load_extension(cog, package=__package__)
             print(f"Loaded cog: {cog}")
 
     async def on_ready(self):
