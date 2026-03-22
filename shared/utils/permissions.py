@@ -1,9 +1,12 @@
 from discord import Member
 from discord.ext import commands
 from shared.utils import misc
-from shared.bot_config import rl_id
+import json
+with open('shared/bot_config/bot_config.json') as f:
+    config = json.load(f)
 from enum import Enum
 
+rl_id = config['rl_id']
 
 class Level(Enum):
     REGISTERED = 0
