@@ -13,7 +13,7 @@ class Fez(commands.Bot):
 
     bot_cogs = [
         '.cogs.staff_commands',
-        "cogs.timeout"
+        ".cogs.timeout"
     ]
 
     async def setup_hook(self) -> None:

@@ -10,9 +10,6 @@ class Timeout(commands.Cog):
 
     @commands.command()
     async def timeout(self, ctx, args: str):
-        if not args:
-            return await ctx.reply("Please provide a user ID.")
-        
         user = ctx.guild.get_member(args)
 
         if user is None:
