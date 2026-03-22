@@ -4,13 +4,14 @@ from shared.utils.user_info import is_on_wl
 import os
 import json
 CURRENT_PATH = os.path.dirname(__file__)
-with open(os.path.join(CURRENT_PATH,"shared/bot_config.json"), "r") as f:
+with open(os.path.join(CURRENT_PATH,"../../shared/bot_config.json"), "r") as f:
     config = json.load(f)
 
 class MessageLogging(commands.Cog):
 
     UNIFIED_SFW_ID = config['ch_id']['#unified-chat-sfw']
     UNIFIED_NSFW_ID = config['ch_id']['#unified-chat-nsfw']
+    STAFF_UNIFIED_ID = config['ch_id']['#unified-chat-staff']
     BOT_DMS_ID = config['ch_id']['#bot-dms']
     STAFF_CHANNELS = config["staff_channels"]
     NSFW_CHANNELS = config["nsfw_channels"]
@@ -20,25 +21,28 @@ class MessageLogging(commands.Cog):
         self.bot_dms = None
         self.unified_nsfw = None
         self.unified_sfw = None
-        self.staff_united = None
+        self.staff_unified = None
         self.bot = bot
 
     async def cog_load(self):
         self.unified_sfw = await self.bot.fetch_channel(self.UNIFIED_SFW_ID)
         if not self.unified_sfw:
-            raise Exception("Unified SFW channel not found")
+            print("Unified SFW channel not found")
         self.unified_nsfw = await self.bot.fetch_channel(self.UNIFIED_NSFW_ID)
         if not self.unified_nsfw:
-            raise Exception("Unified NSFW channel not found")
+            print("Unified NSFW channel not found")
         self.bot_dms = await self.bot.fetch_channel(self.BOT_DMS_ID)
         if not self.bot_dms:
-            raise Exception("Bot DMs channel not found")
+            print("Bot DMs channel not found")
+        self.staff_unified = await self.bot.fetch_channel(self.STAFF_UNIFIED_ID)
+        if not self.staff_unified:
+            print("Staff United channel not found")
 
     def log_message_in(self, channel: discord.TextChannel) -> discord.TextChannel | None:
         if not channel.guild:
             return self.bot_dms
         if channel.id in self.STAFF_CHANNELS:
-            return self.staff_united
+            return self.staff_unified
         if channel.id in self.NSFW_CHANNELS or channel.is_nsfw():
             return self.unified_nsfw
         if channel.id in self.IGNORED_CHANNELS:
