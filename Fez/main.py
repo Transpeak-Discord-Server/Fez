@@ -21,12 +21,12 @@ class Fez(commands.Bot):
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
-            return
+            return None
         if isinstance(error, UserPermissionsError):
             if error.required_perms == "new":
-                ctx.reply("You need to be registered to do that! Please ping a staff member for help.")
-            else:
-                ctx.reply(f"You need to be a {error.required_perms} to do that!")
+                return ctx.reply("You need to be registered to do that! Please ping a staff member for help.")
+            return ctx.reply(f"You need to be a {error.required_perms} to do that!")
+        return print(error)
 
 class Main:
     FEZ_DIR = Path(__file__).resolve().parent
@@ -39,6 +39,8 @@ class Main:
         token = os.getenv("FEZ_TOKEN")
         if not token:
             raise ValueError("Fez token not found in .env file.")
+
+        discord.utils.setup_logging()
 
         client = Fez(intents=intents, command_prefix='!')
         client.run(token)
