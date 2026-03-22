@@ -1,8 +1,10 @@
 from discord import Member
 from discord.ext import commands
 from shared.utils import misc
+import os
 import json
-with open('shared/bot_config/bot_config.json') as f:
+CURRENT_PATH = os.path.dirname(__file__)
+with open(os.path.join(CURRENT_PATH, '../shared/bot_config.json')) as f:
     config = json.load(f)
 from enum import Enum
 
