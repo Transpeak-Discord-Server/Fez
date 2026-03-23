@@ -4,11 +4,10 @@ from shared.utils import misc
 import os
 import json
 CURRENT_PATH = os.path.dirname(__file__)
-with open(os.path.join(CURRENT_PATH, '../bot_config.json')) as f:
-    config = json.load(f)
+from shared.config import Config
 from enum import Enum
 
-rl_id = config['rl_id']
+rl_id = Config.json_config['rl_id']
 
 class Level(Enum):
     REGISTERED = 0
