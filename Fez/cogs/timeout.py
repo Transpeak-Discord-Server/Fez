@@ -1,7 +1,7 @@
 import discord, sqlite3, os, sys
 from discord.ext import commands
 from shared.utils.permissions import permission_check, Level, has_permission
-from shared.utils.misc import getsavedroles
+from shared.utils.misc import getsavedroles, saveroles, is_booster
 from shared.config import Config
 from discord.ext.commands import MissingRequiredArgument, MemberNotFound
 
@@ -52,8 +52,12 @@ class Timeout(commands.Cog):
             await _channel.edit(name=f"closed-{member.id}")
         
         else:
-            # await saveroles(member)
-            pass
+            await saveroles(member)
+
+            timeout_roles = []
+
+            if is_booster(member):
+                timeout_roles.append(discord.utils.get(ctx.server.roles, id=580585348371841034))
     
     @timeout.error
     async def timeout_error(self, ctx, error):
