@@ -5,7 +5,7 @@ from discord.ext import commands
 from datetime import datetime
 from random import randint, choice, sample
 import json
-with open(os.path.join(os.path.dirname(__file__), '../shared/bot_config.json')) as f:
+with open(os.path.join(os.path.dirname(__file__), '../../shared/bot_config.json')) as f:
     config = json.load(f)
 
 PROJECT_PATH = os.path.join(os.path.dirname(__file__), '..')
@@ -45,10 +45,11 @@ class StaffCommands(commands.Cog):
     # Zoey
     @commands.command()
     async def zoey(self, ctx: commands.Context, member = None):
-        if type(member) != discord.Member:
-            member = None
+        if member:
+            member = int(member) if member.isdigit() else None
+            member = ctx.guild.get_member(member)
         chosen_obj_1, chosen_obj_2 = sample(config['ZOEY_DATA']['ZOEY_OBJECTS'], 2)
-        return await ctx.reply(f"Hello{" " + member.display_name if member else ""}, this is Fez from Transpeak's "
+        return await ctx.reply(f"Hello{" " + member.display_name if type(member) == discord.Member else ""}, this is Fez from Transpeak's "
                                f"{choice(config['ZOEY_DATA']['ZOEY_JOB_TITLES'])}. I'm here to inform you that we have decided to banish "
                                f"you to {choice(config['ZOEY_DATA']['ZOEY_LOCATIONS'])}. {choice(config['ZOEY_DATA']['ZOEY_REACTION'])} you have a chance at "
                                f"redemption by finding {choice(config['ZOEY_DATA']['ZOEY_STRUCTURES'])} and collecting "
