@@ -4,9 +4,7 @@ import pytz
 from discord.ext import commands
 from datetime import datetime
 from random import randint, choice, sample
-import json
-with open(os.path.join(os.path.dirname(__file__), '../../shared/bot_config.json')) as f:
-    config = json.load(f)
+from shared.config import Config
 
 PROJECT_PATH = os.path.join(os.path.dirname(__file__), '..')
 
@@ -43,19 +41,21 @@ class StaffCommands(commands.Cog):
 
 
     # Zoey
+    ZOEY_DATA = Config.json_config['ZOEY_DATA']
+
     @commands.command()
     async def zoey(self, ctx: commands.Context, member = None):
         if member:
             member = int(member) if member.isdigit() else None
             member = ctx.guild.get_member(member)
-        chosen_obj_1, chosen_obj_2 = sample(config['ZOEY_DATA']['ZOEY_OBJECTS'], 2)
+        chosen_obj_1, chosen_obj_2 = sample(self.ZOEY_DATA['ZOEY_OBJECTS'], 2)
         return await ctx.reply(f"Hello{" " + member.display_name if type(member) == discord.Member else ""}, this is Fez from Transpeak's "
-                               f"{choice(config['ZOEY_DATA']['ZOEY_JOB_TITLES'])}. I'm here to inform you that we have decided to banish "
-                               f"you to {choice(config['ZOEY_DATA']['ZOEY_LOCATIONS'])}. {choice(config['ZOEY_DATA']['ZOEY_REACTION'])} you have a chance at "
-                               f"redemption by finding {choice(config['ZOEY_DATA']['ZOEY_STRUCTURES'])} and collecting "
+                               f"{choice(self.ZOEY_DATA['ZOEY_JOB_TITLES'])}. I'm here to inform you that we have decided to banish "
+                               f"you to {choice(self.ZOEY_DATA['ZOEY_LOCATIONS'])}. {choice(self.ZOEY_DATA['ZOEY_REACTION'])} you have a chance at "
+                               f"redemption by finding {choice(self.ZOEY_DATA['ZOEY_STRUCTURES'])} and collecting "
                                f"{randint(0,1000)} {chosen_obj_1} and {randint(0,1000)} {chosen_obj_2}. If "
                                f"you fail to do so within {randint(1,7)} days we will have no choice but to report "
-                               f"you for {choice(config['ZOEY_DATA']['ZOEY_CRIME'])}. Thank you for your time.")
+                               f"you for {choice(self.ZOEY_DATA['ZOEY_CRIME'])}. Thank you for your time.")
 
     # Cat
     @commands.command()
