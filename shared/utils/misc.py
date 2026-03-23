@@ -6,7 +6,7 @@ from typing import Iterable, Protocol
 class HasId(Protocol):
     id: int
 
-def get_ids(items: Iterable[HasId]):
+def get_ids(items: Iterable[HasId]) -> list[int]:
     return [item.id for item in items]
 
 
