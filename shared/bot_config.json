@@ -848,5 +848,7 @@
                       "Leaking government documents", "Starting a revolution", "Creating a time machine",
                       "Dropping a glass of water", "Cleaning your room", "Adopting 25 goldfish",
                       "Betrayal against Transpeak", "Playing Pokemon GO"]
-    }
+    },
+    "APPEAL_MESSAGE": "'You have been removed from Transpeak. Should you wish to appeal this ban, please read the information below and follow the guidelines.\nAn appeal can be granted for two reasons: (1) You feel your ban was unjustified; (2) You feel you have reformed and are able to take place on the server once again.\nIf you are requesting an appeal because you feel your ban was unjustified, you may make your request immediately. However, if you are requesting an appeal due to reformation you will be required to wait at least six months before the appeal will be looked at.\nYou may only send in one reform appeal, and one unjust appeal. If both of these get denied, you are not eligible for any future appeals.\nPlease note that if you have previously been unbanned due to a reformation appeal and now have been banned again, ***you may not appeal your ban again.***\nTo request an appeal join the following server and follow the instructions found in #welcome: https://discord.gg/SWFufu7cp2"
+
 }
