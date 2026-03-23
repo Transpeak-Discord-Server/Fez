@@ -1,8 +1,10 @@
+from functools import singledispatch
+from datetime import datetime
+from typing import Iterable, Protocol
+
+
 class HasId(Protocol):
     id: int
-from functools import singledispatch
-
-from datetime import datetime
 
 def get_ids(items: Iterable[HasId]):
     return [item.id for item in items]
