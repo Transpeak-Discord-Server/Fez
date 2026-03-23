@@ -13,9 +13,10 @@ class MsgCountManager:
         b = datetime.now()
         return str(int((b - a).total_seconds() / (7 * 24 * 60 * 60)))
 
-    async def initialise(self):
+    async def initialise(self) -> MsgCountManager:
         await self.msgcount_db.connect()
         await self.msgcount_db.connect()
+        return self
 
     async def get_msg_count(self, user_id: int, week: bool = False) -> int:
         if week:
