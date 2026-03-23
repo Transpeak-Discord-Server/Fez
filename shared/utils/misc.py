@@ -1,3 +1,4 @@
+import sqlite3, os, sys, discord
 from functools import singledispatch
 from datetime import datetime
 from typing import Iterable, Protocol, Any

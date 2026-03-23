@@ -1,9 +1,11 @@
-import discord
+import discord, sqlite3, os, sys
 from discord.ext import commands
 from shared.utils.permissions import permission_check, Level, has_permission
 from shared.utils.misc import getsavedroles
-from shared.bot_config import rl_id
+from shared.config import Config
 from discord.ext.commands import MissingRequiredArgument, MemberNotFound
+
+rl_id = Config.json_config['rl_id']
 
 class Timeout(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -18,8 +20,40 @@ class Timeout(commands.Cog):
 
         if ctx.guild.get_role(timeout_id) in member.roles:
             og_roles = await getsavedroles(member.roles)
+            await member.edit(roles=og_roles)
+
+            # DELETE REGBAN
+
+            con = sqlite3.connect(os.path.join(sys.path[0], "dbs/regban.db"))
+            cur = con.cursor()
+
+            cur.execute("DELETE FROM regban WHERE id = ?", (member.id))
+            con.commit()
+            con.close()
+            await ctx.reply(f"{member.display_name} is now out of time out and roles have been restored.")
+
+            _channel = discord.utils.get(ctx.guild.channels, name="time-out-" + member.id)
+            staff_role = discord.utils.get(ctx.guild.roles, id=rl_id["staff"])
+            staff_junior_role = discord.utils.get(ctx.guild.roles, id=rl_id["staff-junior"])
+            helper_role = discord.utils.get(ctx.guild.roles, id=rl_id["helper"])
+            plus_role = discord.utils.get(ctx.guild.roles, rl_id["a-director"]) # lead mod management role
+
+            await _channel.set_permissions(staff_role, view_channel=False)
+            await _channel.set_permissions(staff_junior_role, view_channel=False)
+            await _channel.set_permissions(helper_role, view_channel=False)
+
+            archive_manager = discord.PermissionOverwrite()
+            archive_manager.read_messages = True
+            archive_manager.read_message_history = True
+            archive_manager.manage_channels = True
+
+            await _channel.set_permissions(plus_role, overwrite=archive_manager)
+            await _channel.send(f"<@&{rl_id["staff-alert"]}> This time-out has concluded.")
+            await _channel.edit(name=f"closed-{member.id}")
         
-        await getsavedroles(member.roles)
+        else:
+            # await saveroles(member)
+            pass
     
     @timeout.error
     async def timeout_error(self, ctx, error):
