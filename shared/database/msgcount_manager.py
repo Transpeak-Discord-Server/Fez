@@ -8,7 +8,7 @@ class MsgCountManager:
         self.msgcount_week_db = Database("message_count_week.db")
 
     @staticmethod
-    def getweek():
+    def getweek() -> str:
         a = datetime(2017, 7, 31, 00, 00, 00)
         b = datetime.now()
         return str(int((b - a).total_seconds() / (7 * 24 * 60 * 60)))
@@ -46,11 +46,11 @@ class MsgCountManager:
 
     async def set_msg_count(self, user_id: int, count: int):
         await self.msgcount_db.execute(self.msgcount_db.database_name,
-            "UPDATE msgcount SET count = ? WHERE id = ?",
-            (count, str(user_id))
+            "INSERT INTO msgcount (id, count) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET count = ?",
+            (str(user_id), count, count)
         )
         await self.msgcount_week_db.execute(self.msgcount_week_db.database_name,
-            "UPDATE msgcount_week SET count = ? WHERE id = ?",
-            (count, str(user_id))
+            "INSERT INTO msgcount_week (id, count) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET count = ?",
+            (str(user_id), count, count)
         )
 
