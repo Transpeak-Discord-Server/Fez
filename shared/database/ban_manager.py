@@ -6,7 +6,7 @@ from core import Database
 class BanManager:
 
     def __init__(self):
-        self.ban_db = Database("bans.db")
+        self.ban_db = Database()
 
     async def get_ban(self, user_id: int) -> dict[str, Any]:
         async with self.ban_db.connection as conn:

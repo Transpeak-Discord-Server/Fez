@@ -1,10 +1,13 @@
 from typing import Iterable, Optional, LiteralString
 import psycopg
-
+from dotenv import load_dotenv
+import os
+PROJECT_PATH = os.path.join(os.path.dirname(__file__), '../..')
+load_dotenv(dotenv_path= os.path.join(PROJECT_PATH, '.env'))
 
 class Database:
 
-    def __init__(self, conn_info: str):
+    def __init__(self, conn_info: str = os.getenv("DATABASE_INFO")):
         self.connection: Optional[psycopg.AsyncConnection] = None
         self.conn_info = conn_info
 
