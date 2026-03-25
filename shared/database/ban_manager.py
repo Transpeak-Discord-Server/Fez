@@ -22,5 +22,5 @@ class BanManager:
 
     async def ban(self, user_id: int, banned_by: int, reason: str):
         await self.ban_db.execute(
-            "INSERT INTO bans (userid, banner, timestamp, reason) VALUES (?, ?, ?)",
+            "INSERT INTO bans (userid, banner, timestamp, reason) VALUES (?, ?, ?, ?)",
             (str(user_id), str(banned_by), int(round(time() * 1000)), reason))
