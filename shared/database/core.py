@@ -1,47 +1,46 @@
-from sqlite3 import Row
-from typing import Iterable
+from typing import Iterable, Optional, LiteralString
+import psycopg
 
-import aiosqlite
-import os
-
-DATABASE_FOLDER = os.path.join(os.path.dirname(__file__), 'dbfiles')
 
 class Database:
 
-    def __init__(self, database_name: str):
-        self.connection = None
-        self.database_name = database_name
-        self.database_path = os.path.join(DATABASE_FOLDER, database_name)
+    def __init__(self, conn_info: str):
+        self.connection: Optional[psycopg.AsyncConnection] = None
+        self.conn_info = conn_info
+
 
     async def __aenter__(self):
-        self.connection = await aiosqlite.connect(self.database_path)
-        self.connection.row_factory = aiosqlite.Row
+        self.connection = await psycopg.AsyncConnection.connect(self.conn_info)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.connection:
             if exc_type is None:
                 await self.connection.commit()
+            else:
+                await self.connection.rollback()
             await self.connection.close()
 
-    async def connect(self):
-        await self.__aenter__()
-
-    async def disconnect(self):
-        await self.__aexit__(None, None, None)
-
     # Should be used for INSERT, UPDATE, DELETE, etc.
-    async def execute(self, query: str, *args) -> int:
-        async with self.connection.execute(query, *args) as cursor:
-            await self.connection.commit()
+    async def execute(self, query: LiteralString, *args) -> int:
+        if not self.connection:
+            raise psycopg.ProgrammingError("Database connection not established, use 'async with' statement")
+        async with self.connection.cursor() as cursor:
+            await cursor.execute(query, *args)
             return cursor.rowcount
 
     # Should be used for SELECT
-    async def fetchall(self, query: str, *args) -> Iterable[Row]:
-        async with self.connection.execute(query, *args) as cursor:
+    async def fetchall(self, query: LiteralString, *args) -> Iterable:
+        if not self.connection:
+            raise psycopg.ProgrammingError("Database connection not established, use 'async with' statement")
+        async with self.connection.cursor() as cursor:
+            await cursor.execute(query, *args)
             return await cursor.fetchall()
 
     # Should be used for SELECT
-    async def fetchone(self, query: str, *args) -> Row:
-        async with self.connection.execute(query, *args) as cursor:
+    async def fetchone(self, query: LiteralString, *args):
+        if not self.connection:
+            raise psycopg.ProgrammingError("Database connection not established, use 'async with' statement")
+        async with self.connection.cursor() as cursor:
+            await cursor.execute(query, *args)
             return await cursor.fetchone()

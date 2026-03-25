@@ -8,11 +8,9 @@ class BanManager:
     def __init__(self):
         self.ban_db = Database("bans.db")
 
-    async def initialise(self):
-        await self.ban_db.connect()
-
     async def get_ban(self, user_id: int) -> dict[str, Any]:
-        row = await self.ban_db.fetchone("SELECT * FROM bans WHERE userid = ?", (str(user_id),))
+        async with self.ban_db.connection as conn:
+            row = await conn.fetchone("SELECT * FROM bans WHERE userid = ?", (str(user_id),))
         return {
             "userid": row['userid'],
             "banned_by": row['banner'],
@@ -21,6 +19,8 @@ class BanManager:
         }
 
     async def ban(self, user_id: int, banned_by: int, reason: str):
-        await self.ban_db.execute(
-            "INSERT INTO bans (userid, banner, timestamp, reason) VALUES (?, ?, ?, ?)",
-            (str(user_id), str(banned_by), int(round(time() * 1000)), reason))
+        async with self.ban_db.connection as conn:
+            await conn.execute(
+                "INSERT INTO bans (userid, banner, timestamp, reason) VALUES (?, ?, ?, ?)",
+                (str(user_id), str(banned_by), int(round(time() * 1000)), reason)
+            )

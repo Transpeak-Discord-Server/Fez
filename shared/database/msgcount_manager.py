@@ -13,11 +13,6 @@ class MsgCountManager:
         b = datetime.now()
         return str(int((b - a).total_seconds() / (7 * 24 * 60 * 60)))
 
-    async def initialise(self) -> MsgCountManager:
-        await self.msgcount_db.connect()
-        await self.msgcount_db.connect()
-        return self
-
     async def get_msg_count(self, user_id: int, week: bool = False) -> int:
         if week:
             db = self.msgcount_week_db
@@ -27,30 +22,34 @@ class MsgCountManager:
             db = self.msgcount_db
             query = "SELECT count FROM msgcount WHERE id = ?"
             args = (str(user_id),)
-        row = await db.fetchone(db.database_name, query, *args)
+        async with db.connection as conn:
+            row = await conn.fetchone(query, *args)
         return row['count'] if row else 0
 
     async def increment_msg_count(self, user_id: int):
         week = self.getweek()
         user = str(user_id)
+        async with self.msgcount_db.connection as conn:
+            await conn.execute(
+                "INSERT INTO msgcount (id, count) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET count = count + 1",
+                (user, 1)
+            )
 
-        await self.msgcount_db.execute(self.msgcount_db.database_name,
-            "INSERT INTO msgcount (id, count) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET count = count + 1",
-            (user, 1)
-        )
-
-        await self.msgcount_week_db.execute(self.msgcount_week_db.database_name,
+        async with self.msgcount_week_db.connection as conn:
+            await conn.execute(
             "INSERT INTO msgcount_week (id, count, week) VALUES (?, ?, ?) ON CONFLICT(id, week) DO UPDATE SET count = count + 1",
             (user, 1, week)
-        )
+            )
 
     async def set_msg_count(self, user_id: int, count: int):
-        await self.msgcount_db.execute(self.msgcount_db.database_name,
-            "INSERT INTO msgcount (id, count) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET count = ?",
-            (str(user_id), count, count)
-        )
-        await self.msgcount_week_db.execute(self.msgcount_week_db.database_name,
+        async with self.msgcount_db.connection as conn:
+            await conn.execute(
+                "INSERT INTO msgcount (id, count) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET count = ?",
+                (str(user_id), count, count)
+            )
+        async with self.msgcount_week_db.connection as conn:
+            await conn.execute(
             "INSERT INTO msgcount_week (id, count) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET count = ?",
             (str(user_id), count, count)
-        )
+            )
 
