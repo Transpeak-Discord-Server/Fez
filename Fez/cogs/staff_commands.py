@@ -75,6 +75,11 @@ class StaffCommands(commands.Cog):
     async def simon(self, ctx: commands.Context):
         return await ctx.reply(f"<@{1383285080700747837}> woof!")
 
+    # Ren
+    @commands.command()
+    async def ren(self, ctx: commands.Context):
+        return await ctx.reply("yo")
+
 
 async def setup(bot):
     await bot.add_cog(StaffCommands(bot))
