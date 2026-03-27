@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from discord.ext import commands
 from dotenv import load_dotenv
+from shared.database.core import Database
 from shared.utils.permissions import UserPermissionsError
 
 class Fez(commands.Bot):
@@ -15,6 +16,7 @@ class Fez(commands.Bot):
         for cog in self.cogs:
             await self.load_extension(cog, package=__package__)
             print(f"Loaded cog: {cog}")
+        await Database.initialise()
 
     async def on_ready(self):
         print(f'{self.user} has finished booting.')

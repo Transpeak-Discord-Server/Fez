@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from shared.database.core import Database
 from shared.utils.permissions import UserPermissionsError
 
 class TransBot(commands.Bot):
@@ -16,6 +17,7 @@ class TransBot(commands.Bot):
         for cog in self.cogs:
             await self.load_extension(cog, package=__package__)
             print(f"Loaded cog: {cog}")
+        await Database.initialise()
 
     async def on_ready(self):
         print(f'{self.user} has finished booting.')
