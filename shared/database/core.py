@@ -1,16 +1,20 @@
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
 from sqlalchemy import BigInteger, ForeignKey, String
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 import os
+
+ENV_PATH = os.path.join(os.path.dirname(__file__), "../../.env")
+load_dotenv(dotenv_path=ENV_PATH)
 
 class Base(DeclarativeBase):
     pass
 
 class Database:
 
-    _engine = create_async_engine(os.getenv("DATABASE_URL"), echo=True)
+    _engine = create_async_engine(os.getenv("DATABASE_INFO"), echo=True)
 
     async_session = async_sessionmaker(bind=_engine, expire_on_commit=False)
 
