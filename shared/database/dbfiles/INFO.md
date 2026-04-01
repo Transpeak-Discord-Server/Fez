@@ -2,6 +2,7 @@
 
 The database is not stored within the Git repository, only on the server. This project uses a PostgreSQL database.
 
+### Schema (OUTDATED)
 ```postgresql
 CREATE TABLE IF NOT EXISTS reglog(
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
