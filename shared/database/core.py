@@ -1,54 +1,69 @@
-from typing import Iterable, Optional, LiteralString
-from psycopg.rows import dict_row
-from psycopg_pool import AsyncConnectionPool
-from dotenv import load_dotenv
+from contextlib import asynccontextmanager
+
+from sqlalchemy import BigInteger, ForeignKey, String
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 import os
-PROJECT_PATH = os.path.join(os.path.dirname(__file__), '../..')
-load_dotenv(dotenv_path= os.path.join(PROJECT_PATH, '.env'))
+
+class Base(DeclarativeBase):
+    pass
 
 class Database:
 
-    _pool: Optional[AsyncConnectionPool] = None
+    _engine = create_async_engine(os.getenv("DATABASE_URL"), echo=True)
 
-    @classmethod
-    async def initialise(cls, conn_info: str = os.getenv("DATABASE_INFO")):
-        if not conn_info:
-            raise ValueError("Database connection info not found in .env file.")
-        cls._pool = AsyncConnectionPool(
-            conninfo=conn_info,
-            open=False,
-            kwargs={"row_factory": dict_row}
-        )
-        await cls._pool.open()
+    async_session = async_sessionmaker(bind=_engine, expire_on_commit=False)
 
-    @classmethod
-    async def close(cls):
-        if cls._pool:
-            await cls._pool.close()
+    @asynccontextmanager
+    async def get_session(self):
+        async with self.async_session() as session:
+            try:
+                yield session
+            finally:
+                await session.close()
 
-    # Should be used for INSERT, UPDATE, DELETE, etc.
-    async def execute(self, query: LiteralString, *args) -> int:
-        if not self._pool:
-            raise RuntimeError("Database pool not established, use Database.initialise() first.")
-        async with self._pool.connection() as connection:
-            async with connection.cursor() as cursor:
-                await cursor.execute(query, *args)
-                return cursor.rowcount
 
-    # Should be used for SELECT
-    async def fetchall(self, query: LiteralString, *args) -> Iterable:
-        if not self._pool:
-            raise RuntimeError("Database pool not established, use Database.initialise() in bot startup.")
-        async with self._pool.connection() as connection:
-            async with connection.cursor() as cursor:
-                await cursor.execute(query, *args)
-                return await cursor.fetchall()
+### DATABASE TABLES ###
 
-    # Should be used for SELECT
-    async def fetchone(self, query: LiteralString, *args):
-        if not self._pool:
-            raise RuntimeError("Database pool not established, use Database.initialise() first.")
-        async with self._pool.connection() as connection:
-            async with connection.cursor() as cursor:
-                await cursor.execute(query, *args)
-                return await cursor.fetchone()
+
+class User(Base):
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    message_count: Mapped[int] = mapped_column(BigInteger, default=0)
+
+    bans: Mapped[list["Ban"]] = relationship(back_populates="user")
+    messages_week: Mapped[list["UserMessagesWeek"]] = relationship(back_populates="user")
+    roles: Mapped[list["UserRoles"]] = relationship(back_populates="user")
+
+
+class Ban(Base):
+
+    __tablename__ = "bans"
+
+    id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), primary_key=True)
+    banner: Mapped[int] = mapped_column(BigInteger, ForeignKey(User.id))
+    timestamp: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    reason: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="bans")
+
+
+class UserMessagesWeek(Base):
+
+    __tablename__ = "user_messages_week"
+
+    id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), primary_key=True)
+    messages: Mapped[int] = mapped_column(BigInteger, default=0)
+    week: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    user: Mapped["User"] = relationship(back_populates="messages_week")
+
+class UserRoles(Base):
+    __tablename__ = "user_roles"
+
+    id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), primary_key=True)
+    role: Mapped[int] = mapped_column(BigInteger, nullable=False, primary_key=True)
+
+    user: Mapped["User"] = relationship(back_populates="roles")

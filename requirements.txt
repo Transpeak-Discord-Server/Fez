@@ -4,3 +4,4 @@ pytz
 aiosqlite
 psycopg
 psycopg-pool
+sqlalchemy
