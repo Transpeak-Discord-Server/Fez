@@ -1,5 +1,5 @@
 # Fez/TransBot - A Discord.py bot for Transpeak
-# Copyright (C) 2026 Aven F
+# Copyright (C) 2026 Fez project contributors
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
