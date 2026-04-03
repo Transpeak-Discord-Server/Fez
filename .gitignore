@@ -207,4 +207,4 @@ marimo/_lsp/
 __marimo__/
 
 # Don't include images or other assets
-assets/images
+assets
