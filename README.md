@@ -8,7 +8,7 @@ Windows users should use WSL and follow the instructions for Linux.
 
 ### Linux
 
-There is a `setup.sh` script that will set up the project for you. You will still need to add the bot tokens to `.env`. The script only works on Debian-based distros.   
+There is a `setup.sh` script that will set up the project for you. You will still need to add the bot tokens to `.env` and populate the `assets` folder. The script only works on Debian-based distros.   
 
 1. Install system dependencies
 
@@ -33,7 +33,9 @@ pip install -r requirements.txt
 FEZ_TOKEN= [Fez's token]
 TBOT_TOKEN= [TransBot's token]
 ```
-5. Run it
+5. Create and populate the `assets` folder
+
+6. Run it
 
    (from the project root)
 * Fez
@@ -44,4 +46,4 @@ python -m Fez.main
 ```shell
 python -m TransBot.main
 ```
-6. Hell yeah
+7. Hell yeah
