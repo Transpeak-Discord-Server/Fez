@@ -22,6 +22,10 @@ from datetime import datetime
 from random import randint, choice, sample
 from shared.config import Config
 
+# ADD FOLLOWING FILES:
+# assets/images/ash_staff_command.gif
+# assets/images/luna_staff_command.png
+
 PROJECT_PATH = os.path.join(os.path.dirname(__file__), '..')
 
 class StaffCommands(commands.Cog):
