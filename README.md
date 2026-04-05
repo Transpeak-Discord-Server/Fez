@@ -33,7 +33,7 @@ pip install -r requirements.txt
 FEZ_TOKEN= [Fez's token]
 TBOT_TOKEN= [TransBot's token]
 ```
-5. Create and populate the `assets` folder
+5. Create and add all the files to the `assets` folder
 
 6. Run it
 
