@@ -34,10 +34,15 @@ If you are making changes to an existing feature, ensure you are putting your ch
 We use snake_case (all lowercase, words are separated by underscores) for variables and functions, and PascalCase (capital letters at the beginning of each word, lowercase for the rest, no spaces) for classes and types.
 
 ### Object-Oriented Programming
-We use Object-Oriented Programming for this project, which means all code is separated into different classes, which contain a set of variables and functions for a specific purpose.
+We use Object-Oriented Programming for this project, which means all code is separated into different classes, which contain a set of variables and functions for a specific purpose. 
 
 Ensure your class(es) contains only one purpose. If a class deals with more than one thing, you can likely separate it into multiple classes.
 
 Keep global variables to an absolute minimum, as they pollute the namespace. Instead, use static and member variables within classes.
 
 ### Separation of concerns
+Ensure that each of your functions does one thing and one thing only. If your function does a chain of things, separate it into multiple functions.
+
+For example, a single function that takes a user's message, checks if it contains a command, has the logic for executing each of those commands, updates a database, sends message, etc. should be separated into multiple functions. 
+
+A good example of separation of concerns is a function that receives the message, then it calls another function if it detects the command prefix that deals with executing commands, then it calls another function to update the user's message count in the database, etc. 
