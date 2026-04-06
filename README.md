@@ -35,6 +35,8 @@ TBOT_TOKEN= [TransBot's token]
 ```
 5. Create and add all the files to the `assets` folder
 
+See "Private Files" for files that need to be added
+
 6. Run it
 
    (from the project root)
@@ -47,3 +49,12 @@ python -m Fez.main
 python -m TransBot.main
 ```
 7. Hell yeah
+
+## Private Files
+
+```
+assets
+└── images
+    ├── ash_staff_command.gif
+    └── luna_staff_command.png
+```
