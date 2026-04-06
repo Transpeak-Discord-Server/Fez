@@ -8,7 +8,7 @@ Windows users should use WSL and follow the instructions for Linux.
 
 ### Linux
 
-There is a `setup.sh` script that will set up the project for you. You will still need to add the bot tokens to `.env` and populate the `assets` folder. The script only works on Debian-based distros.   
+There is a `setup.sh` script that will set up the project for you. You will still need to add the bot tokens to `.env` and create the `assets` folder. The script only works on Debian-based distros.   
 
 1. Install system dependencies
 
