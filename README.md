@@ -30,8 +30,8 @@ pip install -r requirements.txt
 ```
 4. Create a `.env` file and add bot tokens
 ```dotenv
-FEZ_TOKEN= [Fez's token]
-TBOT_TOKEN= [TransBot's token]
+FEZ_TOKEN=[Fez's token]
+TBOT_TOKEN=[TransBot's token]
 ```
 5. Create and add all the files to the `assets` folder
 
