@@ -38,7 +38,7 @@ We use Object-Oriented Programming for this project, which means all code is sep
 
 Ensure your class(es) contains only one purpose. If a class deals with more than one thing, you can likely separate it into multiple classes.
 
-Keep global variables to an absolute minimum, as they pollute the namespace. Instead, use static and member variables within classes.
+Keep global variables to an absolute minimum, as they pollute the namespace and make other code issues far more likely. Instead, use static and member variables within classes.
 
 ### Separation of concerns
 Ensure that each of your functions does one thing and one thing only. If your function does a chain of things, separate it into multiple functions.
