@@ -1,8 +1,8 @@
 import json
 import os
 
-JSON_PATH = os.path.join(os.path.dirname(__file__), 'bot_config.json')
+FILE_PATH = os.path.dirname(__file__)
 
 class Config:
 
-    json_config = json.load(open(JSON_PATH))
+    json_config = json.load(open(os.path.join(FILE_PATH, 'bot_config.json')))
