@@ -1,3 +1,7 @@
 discord.py
 python-dotenv
 pytz
+aiosqlite
+psycopg
+psycopg-pool
+sqlalchemy
