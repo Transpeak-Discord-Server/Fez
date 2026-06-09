@@ -37,4 +37,5 @@ async def shared_error(ctx: commands.Context[Any], error: Exception):
             return None
         await ctx.reply(f"You need to be a {error.required_perms} to do that!")
         return None
-    return print(error)
+    print(error)
+    return None

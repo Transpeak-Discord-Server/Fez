@@ -6,12 +6,13 @@ import pytz
 from discord.ext import commands
 from datetime import datetime
 from random import randint, choice, sample
+from pathlib import Path
 
 from discord.ext.commands import Context
 
 from shared.config import Config
 
-PROJECT_PATH = os.path.join(os.path.dirname(__file__), '..')
+PROJECT_PATH = Path(os.path.dirname(__file__)).parent
 
 class StaffCommands(commands.Cog):
 
@@ -57,12 +58,14 @@ class StaffCommands(commands.Cog):
     @commands.command()
     async def zoey(self, ctx: commands.Context[Any], member_str: str | None = None) -> None:
         member_int = int(member_str) if member_str and member_str.isdigit() else None
-        if not member_int:
-            return None
-        assert ctx.guild is not None
-        member = ctx.guild.get_member(member_int)
+
+        server = ctx.guild
+        if not server: return None
+
+        member = server.get_member(member_int) if member_int else None
         chosen_obj_1, chosen_obj_2 = sample(self.ZOEY_DATA['ZOEY_OBJECTS'], 2)
-        await ctx.reply(f"Hello{" " + member.display_name if type(member) == discord.Member else ""}, this is Fez from Transpeak's "
+
+        await ctx.reply(f"Hello{" " + member.display_name if member else ""}, this is Fez from Transpeak's "
            f"{choice(self.ZOEY_DATA['ZOEY_JOB_TITLES'])}. I'm here to inform you that we have decided to banish "
            f"you to {choice(self.ZOEY_DATA['ZOEY_LOCATIONS'])}. {choice(self.ZOEY_DATA['ZOEY_REACTION'])} you have a chance at "
            f"redemption by finding {choice(self.ZOEY_DATA['ZOEY_STRUCTURES'])} and collecting "
@@ -78,9 +81,11 @@ class StaffCommands(commands.Cog):
         return None
 
     # Luna
+    LUNA_IMAGE_PATH = os.path.join(PROJECT_PATH, 'assets/images/luna_staff_command.png')
+
     @commands.command()
     async def luna(self, ctx: commands.Context[Any]) -> None:
-        with open(os.path.join(PROJECT_PATH, 'assets/images/luna_staff_command.png'), 'rb') as f:
+        with open(self.LUNA_IMAGE_PATH, 'rb') as f:
             await ctx.reply(file=discord.File(f, 'luna_staff_command.png'))
             return None
 
