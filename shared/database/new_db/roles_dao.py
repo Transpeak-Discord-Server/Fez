@@ -3,7 +3,7 @@ from typing import Sequence
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.database.core import UserRoles
+from shared.database.new_db.core import UserRoles
 
 
 class RoleDAO:

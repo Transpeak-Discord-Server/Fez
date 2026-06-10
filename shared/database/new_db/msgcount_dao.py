@@ -3,7 +3,7 @@ from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.database.core import User, UserMessagesWeek
+from shared.database.new_db.core import User, UserMessagesWeek
 
 
 def get_week() -> int:

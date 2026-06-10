@@ -3,7 +3,7 @@ from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.database.core import Ban
+from shared.database.new_db.core import Ban
 
 class BanDAO:
 
