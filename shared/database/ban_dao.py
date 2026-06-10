@@ -1,4 +1,5 @@
 from time import time
+from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,8 +11,8 @@ class BanDAO:
         self.session = session
 
     async def get_ban(self, user_id: int) -> Ban | None:
-        return await self.session.get(Ban, user_id)
+        return cast(Ban | None, await self.session.get(Ban, user_id))
 
-    async def ban(self, user_id: int, banned_by: int, reason: str):
+    async def ban(self, user_id: int, banned_by: int, reason: str) -> None:
         self.session.add(Ban(id=user_id, banner=banned_by, reason=reason, timestamp=int(time())))
         await self.session.commit()

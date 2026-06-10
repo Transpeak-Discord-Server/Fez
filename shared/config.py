@@ -1,7 +1,8 @@
 import json
 import os
+from pathlib import Path
 
-FILE_PATH = os.path.dirname(__file__)
+FILE_PATH = Path(os.path.dirname(__file__))
 
 class Config:
 
