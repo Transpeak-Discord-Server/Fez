@@ -18,11 +18,11 @@ class StaffCommands(commands.Cog):
     AVEN_SLEEP_WINDOW = (2, 8)
 
     @commands.group(invoke_without_command=True)
-    async def aven(self, ctx: commands.Context):
+    async def aven(self, ctx: commands.Context) -> discord.Message:
         return await ctx.reply(f"<@{self.AVEN_USER_ID}>, boop!")
 
     @aven.command(name='time')
-    async def aven_time(self, ctx: commands.Context):
+    async def aven_time(self, ctx: commands.Context) -> discord.Message:
         time_uk = datetime.now(pytz.timezone('Europe/London'))
         time_uk_str = time_uk.strftime('%H:%M:%S')
         start, end = self.AVEN_SLEEP_WINDOW
@@ -32,7 +32,7 @@ class StaffCommands(commands.Cog):
 
 
     # Ash
-    ASH_IMAGE_PATH = os.path.join(PROJECT_PATH, 'assets/images/ash_staff_command.gif')
+    ASH_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/ash_staff_command.gif')
 
     @commands.command()
     async def ash(self, ctx: commands.Context):
@@ -44,7 +44,7 @@ class StaffCommands(commands.Cog):
     ZOEY_DATA = Config.json_config['ZOEY_DATA']
 
     @commands.command()
-    async def zoey(self, ctx: commands.Context, member = None):
+    async def zoey(self, ctx: commands.Context, member = None) -> discord.Message:
         if member:
             member = int(member) if member.isdigit() else None
             member = ctx.guild.get_member(member)
@@ -59,26 +59,14 @@ class StaffCommands(commands.Cog):
 
     # Cat
     @commands.command()
-    async def cat(self, ctx: commands.Context):
+    async def cat(self, ctx: commands.Context) -> discord.Message:
         return await ctx.reply("https://tenor.com/view/15447330")
 
     # Luna
     @commands.command()
-    async def luna(self, ctx: commands.Context):
-        with open(os.path.join(PROJECT_PATH, 'assets/images/luna_staff_command.png'), 'rb') as f:
+    async def luna(self, ctx: commands.Context) -> discord.Message:
+        with open(os.path.join(PROJECT_PATH, 'private/images/luna_staff_command.png'), 'rb') as f:
             return await ctx.reply(file=discord.File(f, 'luna_staff_command.png'))
-
-    # Simon
-    SIMON_USER_ID = 1383285080700747837
-
-    @commands.command()
-    async def simon(self, ctx: commands.Context):
-        return await ctx.reply(f"<@{1383285080700747837}> woof!")
-
-    # Ren
-    @commands.command()
-    async def ren(self, ctx: commands.Context):
-        return await ctx.reply("yo")
 
 
 async def setup(bot):
