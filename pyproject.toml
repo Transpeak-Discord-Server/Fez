@@ -1,0 +1,3 @@
+[tool.mypy]
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+strict = true
