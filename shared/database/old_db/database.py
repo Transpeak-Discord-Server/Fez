@@ -36,7 +36,7 @@ class OldDatabase(Database):
         pass # TODO
 
     @asynccontextmanager
-    async def get_session(self) -> AsyncIterator[AsyncSession]:
+    async def get_session(self) -> AsyncIterator[AsyncSession]:  # type: ignore[override]
         async with self.async_session() as session:
             try:
                 yield session
