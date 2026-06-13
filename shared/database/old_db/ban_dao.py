@@ -6,6 +6,15 @@ from shared.database.old_db.tables import _Ban
 
 class OldBanDAO(BanDAO):
 
+    async def remove_ban(self, user_id: int, timestamp: int) -> bool:
+        ban_select = select(_Ban).where(_Ban.userid == str(user_id) and _Ban.timestamp == str(timestamp))
+        ban = (await self.session.scalars(ban_select)).first()
+        if ban is None:
+            return False
+        await self.session.delete(ban)
+        await self.session.commit()
+        return True
+
     async def get_bans(self, user_id: int) -> list[BanData]:
         bans_select = select(_Ban).where(_Ban.userid == str(user_id))
         bans = (await self.session.scalars(bans_select)).all()
