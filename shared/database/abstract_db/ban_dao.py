@@ -11,6 +11,9 @@ class BanDAO(ABC):
         self.session = session
 
     @abstractmethod
+    async def remove_ban(self, user_id: int, timestamp: int) -> bool: ...
+
+    @abstractmethod
     async def add_ban(self, user_id: int, banner_id: int, timestamp: int, reason: str) -> BanData: ...
 
     @abstractmethod
