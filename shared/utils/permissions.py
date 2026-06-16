@@ -2,7 +2,6 @@ from typing import Any, Callable
 
 from discord import Member
 from discord.ext import commands
-from discord.ext.commands import Context
 
 from shared.utils import misc
 import os
@@ -61,7 +60,7 @@ def has_permission(member: Member, permission_level: Level) -> bool:
     return not user_roles.isdisjoint(staff_roles)
 
 @commands.guild_only()
-def permission_check(permission_level: Level) -> Callable[[Context[Any]], Any]:
+def permission_check(permission_level: Level) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     async def predicate(ctx: commands.Context[Any]) -> bool:
         if has_permission(ctx.author, permission_level): # type: ignore
             return True
