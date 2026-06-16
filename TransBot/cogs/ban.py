@@ -1,29 +1,24 @@
-import os
 from datetime import datetime
 from time import time
-from shared.database.msgcount_manager import MsgCountManager
-from shared.database.ban_manager import BanManager
+from typing import Any
+
+from discord.ext.commands import Context
 
 import discord
 from discord.ext import commands
 
+from shared.config import Config
+from shared.database.old_db.database import OldDatabase
 from shared.utils.permissions import permission_check, Level, has_permission
-import json
-with open(os.path.join(os.path.dirname(__file__), '../../shared/bot_config.json')) as f:
-    config = json.load(f)
 
 class Ban(commands.Cog):
 
     flags = ["-nd", "-d"]
+    config = Config.json_config
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.msgcount_manager = None
-        self.ban_manager = None
-
-    async def cog_load(self):
-        self.msgcount_manager = await MsgCountManager().initialise()
-        self.ban_manager = await BanManager().initialise()
+        self.database = OldDatabase()
 
     def get_ban_flag(self, reason: tuple[str, ...]) -> str | None:
         for flag in reason:
@@ -31,19 +26,25 @@ class Ban(commands.Cog):
                 return flag
         return None
 
-    @staticmethod
-    async def send_appeal_message(member: discord.Member):
+    @classmethod
+    async def send_appeal_message(cls, member: discord.Member) -> None | str:
         try:
-            await member.send(config["APPEAL_MESSAGE"])
+            await member.send(cls.config["APPEAL_MESSAGE"])
             return None
         except discord.Forbidden as e:
             return "Could not send appeal message. Reason: " + str(e)
         except discord.HTTPException as e:
             return "Could not send appeal message. Reason: " + str(e)
 
-    async def handle_appeal(self, ctx, member: discord.Member):
-        time_since_join = datetime.now() - member.joined_at
-        if time_since_join.days > 1 and await self.msgcount_manager.get_msg_count(member.id) > 50:
+    async def handle_appeal(self, ctx: Context[Any], member: discord.Member) -> None:
+
+        time_joined: datetime = member.joined_at if member.joined_at is not None else datetime.now()
+        time_since_join = datetime.now() - time_joined
+
+        async with self.database.dao_sessions() as db:
+            msgcount: int = await db.msgcount.get_message_count(member.id)
+
+        if time_since_join.days > 1 and msgcount > 50:
             error = await self.send_appeal_message(member)
             if error:
                 await ctx.send(error)
@@ -53,27 +54,37 @@ class Ban(commands.Cog):
 
     @commands.command()
     @permission_check(Level.STAFF)
-    async def ban(self, ctx, *args: str):
+    async def ban(self, ctx: Context[Any], *args: str) -> None:
         if not args: return None
 
+        server = ctx.guild
+        if server is None:
+            await ctx.send("This command can only be used within Transpeak.")
+            return None
+
         if not args[0].isdigit():
-            return await ctx.send("Please provide a valid user ID.")
+            await ctx.send("Please provide a valid user ID.")
+            return None
 
-        member = ctx.guild.get_member(int(args[0])) if ctx.guild.get_member(int(args[0])) else self.bot.get_user(int(args[0]))
-        _is_member = isinstance(member, discord.Member)
+        member = server.get_member(int(args[0]))
+
         if not member:
-            return await ctx.send("User not found.")
+            await ctx.send("User not found.")
+            return None
 
-        if _is_member and has_permission(member, Level.HELPER):
-            return await ctx.send("You cannot ban a staff member.")
+        if has_permission(member, Level.HELPER):
+            await ctx.send("You cannot ban a staff member.")
+            return None
 
-        reason = args[1:]
+        reason = " ".join(args[1:])
         if not reason:
-            return await ctx.send("Please provide a reason.")
+            await ctx.send("Please provide a reason.")
+            return None
 
-        ban_flag = self.get_ban_flag(reason)
+        ban_flag = self.get_ban_flag(args[1:])
         if not ban_flag:
-            return await ctx.send("No ban flag found. Please use -nd or -d.")
+            await ctx.send("No ban flag found. Please use -nd or -d.")
+            return None
 
         reason = " ".join(reason)
         reason = reason.replace(ban_flag, "", 1)
@@ -82,16 +93,16 @@ class Ban(commands.Cog):
         if ban_flag == "-d":
             days = 14
 
-        if _is_member:
+        if isinstance(member, discord.Member):
             await self.handle_appeal(ctx, member)
 
-        await ctx.guild.ban(member, reason=reason, delete_message_days=days)
+        await server.ban(member, reason=reason, delete_message_days=days)
 
-        await self.ban_manager.add_ban(member.id, ctx.author.id, int(round(time() * 1000)), reason)
-        return await ctx.send(f"User {member.mention} has been banned.")
+        async with self.database.dao_sessions() as db:
+            await db.ban.add_ban(member.id, ctx.author.id, int(round(time() * 1000)), reason)
+        await ctx.send(f"User {member.mention} has been banned.")
+        return None
 
-
-
-async def setup(bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Ban(bot))
 
