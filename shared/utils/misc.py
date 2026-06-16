@@ -15,6 +15,11 @@ class HasId(Protocol):
 def get_ids(items: Iterable[HasId]) -> list[int]:
     return [item.id for item in items]
 
+def get_week() -> int:
+    a = datetime(2017, 7, 31, 00, 00, 00)
+    b = datetime.now()
+    return int((b - a).total_seconds() / (7 * 24 * 60 * 60))
+
 
 # format time
 

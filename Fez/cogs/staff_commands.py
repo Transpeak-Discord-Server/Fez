@@ -94,7 +94,7 @@ class StaffCommands(commands.Cog):
 
     @commands.command()
     async def simon(self, ctx: commands.Context[Any]) -> None:
-        await ctx.reply(f"<@{1383285080700747837}> woof!")
+        await ctx.reply(f"<@{self.SIMON_USER_ID}> woof!")
         return None
 
     # Ren
