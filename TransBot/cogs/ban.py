@@ -47,9 +47,9 @@ class Ban(commands.Cog):
         if time_since_join.days > 1 and msgcount > 50:
             error = await self.send_appeal_message(member)
             if error:
-                await ctx.send(error)
+                await ctx.reply(error)
         else:
-            await ctx.send(
+            await ctx.reply(
                 "Appeal message not sent. User has not been in the server for 24 hours and/or has not sent 50 messages.")
 
     @commands.command()
@@ -58,33 +58,33 @@ class Ban(commands.Cog):
 
         server = ctx.guild
         if server is None:
-            await ctx.send("This command can only be used within Transpeak.")
+            await ctx.reply("This command can only be used within Transpeak.")
             return None
 
         if not args: return None
 
         if not args[0].isdigit():
-            await ctx.send("Please provide a valid user ID.")
+            await ctx.reply("Please provide a valid user ID.")
             return None
 
         member = server.get_member(int(args[0]))
 
         if not member:
-            await ctx.send("User not found.")
+            await ctx.reply("User not found.")
             return None
 
         if has_permission(member, Level.HELPER):
-            await ctx.send("You cannot ban a staff member.")
+            await ctx.reply("You cannot ban a staff member.")
             return None
 
         reason = " ".join(args[1:])
         if not reason:
-            await ctx.send("Please provide a reason.")
+            await ctx.reply("Please provide a reason.")
             return None
 
         ban_flag = self.get_ban_flag(args[1:])
         if not ban_flag:
-            await ctx.send("No ban flag found. Please use -nd or -d.")
+            await ctx.reply("No ban flag found. Please use -nd or -d.")
             return None
 
         reason = " ".join(reason)
@@ -102,7 +102,7 @@ class Ban(commands.Cog):
         async with self.database.dao_sessions() as db:
             await db.ban.add_ban(member.id, ctx.author.id, int(round(time() * 1000)), reason)
 
-        await ctx.send(f"User {member.mention} has been banned.")
+        await ctx.reply(f"User {member.mention} has been banned.")
         return None
 
 async def setup(bot: commands.Bot) -> None:
