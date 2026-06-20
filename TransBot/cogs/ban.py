@@ -91,7 +91,7 @@ class Ban(commands.Cog):
 
         days = 0
         if ban_flag == "-d":
-            days = 14
+            days = 7
 
         if isinstance(member, discord.Member):
             await self.handle_appeal(ctx, member)
@@ -100,6 +100,7 @@ class Ban(commands.Cog):
 
         async with self.database.dao_sessions() as db:
             await db.ban.add_ban(member.id, ctx.author.id, int(round(time() * 1000)), reason)
+
         await ctx.send(f"User {member.mention} has been banned.")
         return None
 
