@@ -2,16 +2,15 @@ from datetime import datetime
 from time import time
 from typing import Any
 
-from discord import client
-from discord.ext.commands import Context
-
 import discord
 from discord.ext import commands
+from discord.ext.commands import Context
 
 from shared.config import Config
 from shared.database.old_db.database import OldDatabase
 from shared.utils.misc import get_member_or_user
 from shared.utils.permissions import permission_check, Level, has_permission
+
 
 class Ban(commands.Cog):
 

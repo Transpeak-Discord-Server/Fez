@@ -5,8 +5,8 @@ from pathlib import Path
 FILE_PATH = Path(os.path.dirname(__file__))
 
 # Swap when using the test server
-BOT_CONFIG = 'bot_config.json'
-# BOT_CONFIG = 'test_server_config.json'
+# BOT_CONFIG = 'bot_config.json'
+BOT_CONFIG = 'test_server_config.json'
 
 class Config:
 
