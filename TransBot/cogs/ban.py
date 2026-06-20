@@ -47,8 +47,8 @@ class Ban(commands.Cog):
 
         if time_since_join.days > 1 and msgcount > 50:
             error = await self.send_appeal_message(member)
-            if error:
-                await ctx.reply(error)
+            if error: await ctx.reply(error)
+            else: await ctx.reply("Appeal message sent.")
         else:
             await ctx.reply(
                 "Appeal message not sent. User has not been in the server for 24 hours and/or has not sent 50 messages.")
