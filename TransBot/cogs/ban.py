@@ -2,6 +2,7 @@ from datetime import datetime
 from time import time
 from typing import Any
 
+from discord import client
 from discord.ext.commands import Context
 
 import discord
@@ -9,6 +10,7 @@ from discord.ext import commands
 
 from shared.config import Config
 from shared.database.old_db.database import OldDatabase
+from shared.utils.misc import get_member_or_user
 from shared.utils.permissions import permission_check, Level, has_permission
 
 class Ban(commands.Cog):
@@ -67,13 +69,13 @@ class Ban(commands.Cog):
             await ctx.reply("Please provide a valid user ID.")
             return None
 
-        member = server.get_member(int(args[0]))
+        member = await get_member_or_user(server, self.bot, int(args[0]))
 
         if not member:
             await ctx.reply("User not found.")
             return None
 
-        if has_permission(member, Level.HELPER):
+        if isinstance(member, discord.Member) and has_permission(member, Level.HELPER):
             await ctx.reply("You cannot ban a staff member.")
             return None
 
