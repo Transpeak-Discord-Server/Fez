@@ -55,12 +55,13 @@ class Ban(commands.Cog):
     @commands.command()
     @permission_check(Level.STAFF)
     async def ban(self, ctx: Context[Any], *args: str) -> None:
-        if not args: return None
 
         server = ctx.guild
         if server is None:
             await ctx.send("This command can only be used within Transpeak.")
             return None
+
+        if not args: return None
 
         if not args[0].isdigit():
             await ctx.send("Please provide a valid user ID.")
