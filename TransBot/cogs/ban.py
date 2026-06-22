@@ -97,7 +97,7 @@ class Ban(commands.Cog):
         await server.ban(member, reason=reason, delete_message_days=days)
 
         async with self.database.dao_sessions() as db:
-            await db.ban.add_ban(member.id, ctx.author.id, int(round(time() * 1000)), reason)
+            await db.ban.add_ban(member.id, ctx.author.id, int(round(time() * 1000)), reason, list(links))
 
         await ctx.reply(f"User {member.mention} has been banned.")
         return None
@@ -118,6 +118,7 @@ class Ban(commands.Cog):
                 color=discord.Color.red()
             )
             embed.set_author(name=banner_name, icon_url=banner_icon)
+            if len(ban.links) > 0: embed.add_field(name="Links", value="\n".join(ban.links))
             embed.add_field(name="Timestamp", value=timestamp)
 
             embeds.append(embed)
