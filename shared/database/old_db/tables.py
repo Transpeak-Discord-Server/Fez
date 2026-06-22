@@ -73,6 +73,14 @@ class _Ban(_Base):
     timestamp = mapped_column(Text, primary_key=True)
     reason = mapped_column(Text, nullable=True)
 
+class _Banlink(_Base):
+
+    __tablename__ = 'banlinks'
+
+    userid = mapped_column(Text, primary_key=True)
+    timestamp = mapped_column(Text, primary_key=True)
+    link = mapped_column(Text, primary_key=True)
+
 
 class _Wallet(_Base):
     __tablename__ = 'wallets'

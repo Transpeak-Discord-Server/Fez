@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from shared.database.abstract_db.ban_dao import BanDAO
 from shared.database.data import BanData
-from shared.database.old_db.tables import _Ban
+from shared.database.old_db.tables import _Ban, _Banlink
 
 
 class OldBanDAO(BanDAO):
@@ -20,13 +20,20 @@ class OldBanDAO(BanDAO):
         bans = (await self.session.scalars(bans_select)).all()
         if not bans:
             return []
-        return [
-            BanData(int(ban.userid), int(ban.banner), int(ban.timestamp), str(ban.reason))
-            for ban in bans
-        ]
+        bans_with_links: list[BanData] = []
+        for ban in bans:
+            links_select = select(_Banlink).where(_Banlink.userid == ban.userid and _Banlink.timestamp == ban.timestamp)
+            links = (await self.session.scalars(links_select)).all()
+            bans_with_links.append(BanData(int(ban.userid), int(ban.banner), int(ban.timestamp), str(ban.reason), [
+                str(x.link) for x in links
+            ]))
+        return bans_with_links
 
-    async def add_ban(self, user_id: int, banner_id: int, timestamp: int, reason: str) -> BanData:
+    async def add_ban(self, user_id: int, banner_id: int, timestamp: int, reason: str, links: list[str]) -> BanData:
         ban = _Ban(userid=str(user_id), banner=str(banner_id), timestamp=str(timestamp), reason=reason)
         self.session.add(ban)
+        for link in links:
+            ban_link = _Banlink(userid=str(user_id), timestamp=str(timestamp), link=link)
+            self.session.add(ban_link)
         await self.session.commit()
-        return BanData(user_id, banner_id, timestamp, reason)
+        return BanData(user_id, banner_id, timestamp, reason, links)
