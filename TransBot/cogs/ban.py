@@ -44,7 +44,7 @@ class Ban(commands.Cog):
         async with self.database.dao_sessions() as db:
             msgcount: int = await db.msgcount.get_message_count(member.id)
 
-        if time_since_join.days > 1 or msgcount > 50:
+        if time_since_join.days >= 1 or msgcount > 50:
             error = await self.send_appeal_message(member)
             if error: await ctx.reply(error)
             else: await ctx.reply("Appeal message sent.")
@@ -62,9 +62,7 @@ class Ban(commands.Cog):
             await ctx.reply("This command can only be used within Transpeak.")
             return None
 
-        if not args: return None
-
-        if not args[0].isdigit():
+        if not args or not args[0].isdigit():
             await ctx.reply("Please provide a valid user ID.")
             return None
 
@@ -78,19 +76,19 @@ class Ban(commands.Cog):
             await ctx.reply("You cannot ban a staff member.")
             return None
 
-        ban_flag = args[2]
-        if not ban_flag or ban_flag not in self.flags:
+        if len(args) < 2:
+            await ctx.reply("Please provide a reason.")
+            return None
+        reason = args[1]
+
+        if len(args) < 3 or args[2] not in self.flags:
             await ctx.reply("No ban flag found. Please use -nd or -d.")
             return None
+        ban_flag = args[2]
 
         days = 7 if ban_flag == "-d" else 0
 
-        reason = args[1]
-        if not reason:
-            await ctx.reply("Please provide a reason.")
-            return None
-
-        links = args[3:]
+        links: tuple[str, ...] = args[3:] if len(args) >= 4 else ()
 
         await self.handle_appeal(ctx, member)
 
