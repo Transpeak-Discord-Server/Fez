@@ -22,12 +22,6 @@ class Ban(commands.Cog):
         self.bot = bot
         self.database = OldDatabase()
 
-    def get_ban_flag(self, reason: tuple[str, ...]) -> str | None:
-        for flag in reason:
-            if flag in self.flags:
-                return flag
-        return None
-
     @classmethod
     async def send_appeal_message(cls, member: discord.Member) -> None | str:
         try:
@@ -84,18 +78,19 @@ class Ban(commands.Cog):
             await ctx.reply("You cannot ban a staff member.")
             return None
 
-        ban_flag = self.get_ban_flag(args[1:])
-        if not ban_flag:
+        ban_flag = args[2]
+        if not ban_flag or ban_flag not in self.flags:
             await ctx.reply("No ban flag found. Please use -nd or -d.")
             return None
 
-        reason = " ".join(args[1:])
-        reason = reason.replace(ban_flag, "", 1)
+        days = 7 if ban_flag == "-d" else 0
+
+        reason = args[1]
         if not reason:
             await ctx.reply("Please provide a reason.")
             return None
 
-        days = 7 if ban_flag == "-d" else 0
+        links = args[3:]
 
         await self.handle_appeal(ctx, member)
 
