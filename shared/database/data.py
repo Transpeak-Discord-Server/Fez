@@ -16,6 +16,7 @@ class BanData:
     banner: int
     timestamp: int
     reason: str
+    links: list[str]
 
 @dataclass
 class UserMessagesWeekData:
