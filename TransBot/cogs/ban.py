@@ -37,7 +37,11 @@ class Ban(commands.Cog):
         except discord.HTTPException as e:
             return "Could not send appeal message. Reason: " + str(e)
 
-    async def handle_appeal(self, ctx: Context[Any], member: discord.Member) -> None:
+    async def handle_appeal(self, ctx: Context[Any], member: discord.Member | discord.User) -> None:
+
+        if isinstance(member, discord.User):
+            await ctx.reply("Appeal message not sent. User is not in the server.")
+            return None
 
         time_joined: datetime = member.joined_at if member.joined_at is not None else datetime.now()
         time_since_join = datetime.now() - time_joined
@@ -52,6 +56,7 @@ class Ban(commands.Cog):
         else:
             await ctx.reply(
                 "Appeal message not sent. User has not been in the server for 24 hours and/or has not sent 50 messages.")
+        return None
 
     @commands.command()
     @permission_check(Level.STAFF)
@@ -78,25 +83,20 @@ class Ban(commands.Cog):
             await ctx.reply("You cannot ban a staff member.")
             return None
 
-        reason = " ".join(args[1:])
-        if not reason:
-            await ctx.reply("Please provide a reason.")
-            return None
-
         ban_flag = self.get_ban_flag(args[1:])
         if not ban_flag:
             await ctx.reply("No ban flag found. Please use -nd or -d.")
             return None
 
-        reason = " ".join(reason)
+        reason = " ".join(args[1:])
         reason = reason.replace(ban_flag, "", 1)
+        if not reason:
+            await ctx.reply("Please provide a reason.")
+            return None
 
-        days = 0
-        if ban_flag == "-d":
-            days = 7
+        days = 7 if ban_flag == "-d" else 0
 
-        if isinstance(member, discord.Member):
-            await self.handle_appeal(ctx, member)
+        await self.handle_appeal(ctx, member)
 
         await server.ban(member, reason=reason, delete_message_days=days)
 
