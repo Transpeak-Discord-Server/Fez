@@ -7,8 +7,9 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from shared.config import Config
+from shared.database.data import BanData
 from shared.database.old_db.database import OldDatabase
-from shared.utils.misc import get_member_or_user
+from shared.utils.misc import get_member_or_user, format_time
 from shared.utils.permissions import permission_check, Level, has_permission
 
 
@@ -49,7 +50,7 @@ class Ban(commands.Cog):
         async with self.database.dao_sessions() as db:
             msgcount: int = await db.msgcount.get_message_count(member.id)
 
-        if time_since_join.days > 1 and msgcount > 50:
+        if time_since_join.days > 1 or msgcount > 50:
             error = await self.send_appeal_message(member)
             if error: await ctx.reply(error)
             else: await ctx.reply("Appeal message sent.")
@@ -105,6 +106,62 @@ class Ban(commands.Cog):
 
         await ctx.reply(f"User {member.mention} has been banned.")
         return None
+
+    async def bans_embeds(self, server: discord.Guild, bans: list[BanData]) -> list[discord.Embed]:
+
+        embeds: list[discord.Embed] = []
+
+        for ban in bans:
+
+            banned_by = await get_member_or_user(server, self.bot, ban.banner)
+            banner_name = banned_by.display_name if banned_by else "Unknown"
+            banner_icon = banned_by.display_avatar.url if banned_by else None
+
+            timestamp = format_time(ban.timestamp//1000, "f")
+            embed = discord.Embed(
+                description=ban.reason,
+                color=discord.Color.red()
+            )
+            embed.set_author(name=banner_name, icon_url=banner_icon)
+            embed.add_field(name="Timestamp", value=timestamp)
+
+            embeds.append(embed)
+
+        return embeds
+
+    @commands.command(aliases=['bansearch'])
+    @permission_check(Level.STAFF)
+    async def bans(self, ctx: Context[Any], *args: str) -> None:
+
+        server = ctx.guild
+        if server is None:
+            await ctx.reply("This command can only be used within Transpeak.")
+            return None
+
+        if not args: return None
+
+        if not args[0].isdigit():
+            await ctx.reply("Please provide a valid user ID.")
+            return None
+
+        user = await get_member_or_user(server, self.bot, int(args[0]))
+        user_name = user.display_name if user is not None else args[0]
+
+        async with self.database.dao_sessions() as db:
+            bans = await db.ban.get_bans(int(args[0]))
+
+        if len(bans) == 0:
+            await ctx.reply("**User has no recorded bans.**")
+            return None
+
+        for i in range(0, len(bans), 10):
+                await ctx.reply(content=f"**{user_name}'s bans**" if i == 0 else None,
+                               embeds=await self.bans_embeds(server, bans[i:i+10]))
+
+        return None
+
+
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Ban(bot))
