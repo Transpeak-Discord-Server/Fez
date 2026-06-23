@@ -18,3 +18,6 @@ class BanDAO(ABC):
 
     @abstractmethod
     async def get_bans(self, user_id: int) -> list[BanData]: ...
+
+    @abstractmethod
+    async def edit_ban(self, user_id: int, timestamp: int, updated_reason: str) -> bool: ...

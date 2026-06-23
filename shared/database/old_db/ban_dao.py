@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from typing import cast, Any
+
+from sqlalchemy import select, update, CursorResult
 from shared.database.abstract_db.ban_dao import BanDAO
 from shared.database.data import BanData
 from shared.database.old_db.tables import _Ban, _Banlink
@@ -37,3 +39,9 @@ class OldBanDAO(BanDAO):
             self.session.add(ban_link)
         await self.session.commit()
         return BanData(user_id, banner_id, timestamp, reason, links)
+
+    async def edit_ban(self, user_id: int, timestamp: int, updated_reason: str) -> bool:
+        ban_update = update(_Ban).where(_Ban.userid == str(user_id)).where(_Ban.timestamp == str(timestamp)).values(reason=updated_reason)
+        result = cast(CursorResult[Any], await self.session.execute(ban_update))
+        await self.session.commit()
+        return result.rowcount == 1
