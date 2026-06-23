@@ -212,28 +212,12 @@ class Ban(commands.Cog):
         await ctx.reply(f"{user.mention} has been unbanned.{f"\nReason: {reason}" if reason is not None else ""}")
         return None
 
-    @commands.command()
-    @permission_check(Level.STAFF)
-    async def editban(self, ctx: Context[Any], *args: str) -> None:
-
-        if not args: return None
-
-        server = await self.require_server(ctx)
-        if server is None: return None
-
-        if not args[0].isdigit():
-            await ctx.reply("Please provide a valid message ID.")
-            return None
-
-        if len(args) < 2:
-            await ctx.reply("Please provide a valid message ID and updated reason.")
-            return None
-
+    async def get_ban_message(self, ctx: Context[Any], message_id: int) -> tuple[discord.Message, discord.Embed, datetime, int] | None:
         bans_channel = self.bot.get_channel(self.config["ch_id"]["#bans-warnings"])
         if not isinstance(bans_channel, TextChannel): raise ConfigError("#bans-warnings not correctly set")
 
         try:
-            message = await bans_channel.fetch_message(int(args[0]))
+            message = await bans_channel.fetch_message(message_id)
         except discord.NotFound:
             await ctx.reply("Message not found.")
             return None
@@ -249,18 +233,41 @@ class Ban(commands.Cog):
             await ctx.reply("Invalid ban message.")
             return None
 
-        updated_reason = " ".join(args[1:])
-
-        old_embed = message.embeds[0]
-        embed = old_embed
-        embed.description = updated_reason
-
+        embed = message.embeds[0]
         timestamp = embed.timestamp
         user_id = embed.author.name
 
         if timestamp is None or user_id is None or not user_id.isdigit():
             await ctx.reply("Invalid ban message.")
             return None
+
+        return message, embed, timestamp, int(user_id)
+
+    @commands.command(aliases=['editban'])
+    @permission_check(Level.STAFF)
+    async def edit_ban(self, ctx: Context[Any], *args: str) -> None:
+
+        if not args: return None
+
+        server = await self.require_server(ctx)
+        if server is None: return None
+
+        if not args[0].isdigit():
+            await ctx.reply("Please provide a valid message ID.")
+            return None
+
+        if len(args) < 2:
+            await ctx.reply("Please provide a valid message ID and updated reason.")
+            return None
+
+        ban_info = await self.get_ban_message(ctx, int(args[0]))
+        if ban_info is None: return None
+
+        (message, embed, timestamp, user_id) = ban_info
+
+        updated_reason = " ".join(args[1:])
+        old_description = embed.description
+        embed.description = updated_reason
 
         try:
             await message.edit(embed=embed)
@@ -273,10 +280,38 @@ class Ban(commands.Cog):
 
         if not result:
             await ctx.reply("Database error.")
-            await message.edit(embed=old_embed)
+            embed.description = old_description
+            await message.edit(embed=embed)
             return None
 
         await ctx.reply("Ban reason updated.")
+        return None
+
+    @commands.command(aliases=['removeban'])
+    async def remove_ban(self, ctx: Context[Any], *args: str) -> None:
+
+        if not args: return None
+
+        if not args[0].isdigit():
+            await ctx.reply("Please provide a valid message ID.")
+
+        server = await self.require_server(ctx)
+        if not server: return None
+
+        ban_info = await self.get_ban_message(ctx, int(args[0]))
+        if ban_info is None: return None
+
+        (message, embed, timestamp, user_id) = ban_info
+
+        async with self.database.dao_sessions() as db:
+            result = await db.ban.remove_ban(int(user_id), int(timestamp.timestamp() * 1000))
+
+        if not result:
+            await ctx.reply("Given ban not in database.")
+            return None
+
+        await message.delete()
+        await ctx.reply("Ban deleted.")
         return None
 
 
