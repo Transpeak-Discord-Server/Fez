@@ -3,13 +3,15 @@ from time import time
 from typing import Any
 
 import discord
+from discord import TextChannel
 from discord.ext import commands
-from discord.ext.commands import Context
+from discord.ext.commands import Context, CommandError
 
 from shared.config import Config
 from shared.database.data import BanData
 from shared.database.old_db.database import OldDatabase
-from shared.utils.misc import get_member_or_user, format_time
+from shared.utils.errors import ConfigError
+from shared.utils.misc import get_member_or_user
 from shared.utils.permissions import permission_check, Level, has_permission
 
 
@@ -38,6 +40,33 @@ class Ban(commands.Cog):
             await ctx.reply("User not found.")
             return None
         return user
+
+    async def ban_embed(self, server: discord.Guild, ban: BanData) -> discord.Embed:
+
+        user = await get_member_or_user(server, self.bot, ban.user)
+        banner = await get_member_or_user(server, self.bot, ban.banner)
+        if user is None or banner is None: raise CommandError("ban_embed run without valid user and/or banner")
+
+        embed = discord.Embed(
+            title=f"{user.display_name} banned",
+            description=ban.reason,
+            timestamp=datetime.fromtimestamp(ban.timestamp/1000),
+            colour=discord.Colour.red()
+        )
+        embed.set_author(name=user.id, icon_url=user.display_avatar.url)
+        embed.add_field(name="Links", value="\n".join(ban.links))
+        embed.set_footer(text=banner.display_name, icon_url=banner.display_avatar.url)
+
+        return embed
+
+    async def bans_embeds(self, server: discord.Guild, bans: list[BanData]) -> list[discord.Embed]:
+
+        embeds: list[discord.Embed] = []
+
+        for ban in bans:
+            embeds.append(await self.ban_embed(server, ban))
+
+        return embeds
 
     @classmethod
     async def send_appeal_message(cls, member: discord.Member) -> None | str:
@@ -70,6 +99,16 @@ class Ban(commands.Cog):
                 "Appeal message not sent. User has not been in the server for 24 hours and/or has not sent 50 messages.")
         return None
 
+    async def log_ban(self, server: discord.Guild, ban: BanData) -> None:
+
+        embed = await self.ban_embed(server, ban)
+
+        channel = server.get_channel(self.config["ch_id"]["#bans-warnings"])
+        if channel is None or not isinstance(channel, TextChannel): raise ConfigError("#bans-warnings not correctly set")
+
+        await channel.send(embed=embed)
+        return None
+
     @commands.command()
     @permission_check(Level.STAFF)
     async def ban(self, ctx: Context[Any], *args: str) -> None:
@@ -100,38 +139,27 @@ class Ban(commands.Cog):
 
         links: tuple[str, ...] = args[3:] if len(args) >= 4 else ()
 
+        try:
+            await server.fetch_ban(member)
+            await ctx.reply(f"{member.mention} is already banned.")
+            return None
+        except discord.NotFound:
+            pass
+
         await self.handle_appeal(ctx, member)
 
         await server.ban(member, reason=reason, delete_message_days=days)
 
+        ban_time = int(round(time() * 1000))
+        ban_data = BanData(member.id, ctx.author.id, ban_time, reason, list(links))
+
         async with self.database.dao_sessions() as db:
-            await db.ban.add_ban(member.id, ctx.author.id, int(round(time() * 1000)), reason, list(links))
+            await db.ban.add_ban(ban_data.user, ban_data.banner, ban_data.timestamp, ban_data.reason, ban_data.links)
+
+        await self.log_ban(server, ban_data)
 
         await ctx.reply(f"User {member.mention} has been banned.")
         return None
-
-    async def bans_embeds(self, server: discord.Guild, bans: list[BanData]) -> list[discord.Embed]:
-
-        embeds: list[discord.Embed] = []
-
-        for ban in bans:
-
-            banned_by = await get_member_or_user(server, self.bot, ban.banner)
-            banner_name = banned_by.display_name if banned_by else "Unknown"
-            banner_icon = banned_by.display_avatar.url if banned_by else None
-
-            timestamp = format_time(ban.timestamp//1000, "f")
-            embed = discord.Embed(
-                description=ban.reason,
-                color=discord.Color.red()
-            )
-            embed.set_author(name=banner_name, icon_url=banner_icon)
-            if len(ban.links) > 0: embed.add_field(name="Links", value="\n".join(ban.links))
-            embed.add_field(name="Timestamp", value=timestamp)
-
-            embeds.append(embed)
-
-        return embeds
 
     @commands.command(aliases=['bansearch'])
     @permission_check(Level.STAFF)
@@ -177,11 +205,80 @@ class Ban(commands.Cog):
             await ctx.reply(f"{user.mention} is not banned.")
             return None
 
-        reason = "" if len(args) <= 1 else " ".join(args[1:])
+        reason = None if len(args) <= 1 else " ".join(args[1:])
+        audit_log_reason = f"Unbanned by {ctx.author.display_name} with reason: {reason}"
 
-        await server.unban(user, reason=reason)
-        await ctx.reply(f"{user.mention} has been unbanned.")
+        await server.unban(user, reason=audit_log_reason)
+        await ctx.reply(f"{user.mention} has been unbanned.{f"\nReason: {reason}" if reason is not None else ""}")
         return None
+
+    @commands.command()
+    @permission_check(Level.STAFF)
+    async def editban(self, ctx: Context[Any], *args: str) -> None:
+
+        if not args: return None
+
+        server = await self.require_server(ctx)
+        if server is None: return None
+
+        if not args[0].isdigit():
+            await ctx.reply("Please provide a valid message ID.")
+            return None
+
+        if len(args) < 2:
+            await ctx.reply("Please provide a valid message ID and updated reason.")
+            return None
+
+        bans_channel = self.bot.get_channel(self.config["ch_id"]["#bans-warnings"])
+        if not isinstance(bans_channel, TextChannel): raise ConfigError("#bans-warnings not correctly set")
+
+        try:
+            message = await bans_channel.fetch_message(int(args[0]))
+        except discord.NotFound:
+            await ctx.reply("Message not found.")
+            return None
+        except discord.Forbidden:
+            await ctx.reply(f"Uh-oh! It looks like I can't access that message.\n"
+                            f"Make sure your message is from {bans_channel.mention}")
+            return None
+        except discord.HTTPException:
+            await ctx.reply("Network error.")
+            return None
+
+        if len(message.embeds) != 1:
+            await ctx.reply("Invalid ban message.")
+            return None
+
+        updated_reason = " ".join(args[1:])
+
+        old_embed = message.embeds[0]
+        embed = old_embed
+        embed.description = updated_reason
+
+        timestamp = embed.timestamp
+        user_id = embed.author.name
+
+        if timestamp is None or user_id is None or not user_id.isdigit():
+            await ctx.reply("Invalid ban message.")
+            return None
+
+        try:
+            await message.edit(embed=embed)
+        except discord.Forbidden:
+            await ctx.reply("That message was not sent by me.")
+            return None
+
+        async with self.database.dao_sessions() as db:
+            result = await db.ban.edit_ban(int(user_id), int(timestamp.timestamp() * 1000), updated_reason)
+
+        if not result:
+            await ctx.reply("Database error.")
+            await message.edit(embed=old_embed)
+            return None
+
+        await ctx.reply("Ban reason updated.")
+        return None
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Ban(bot))
