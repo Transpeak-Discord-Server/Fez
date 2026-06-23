@@ -22,6 +22,23 @@ class Ban(commands.Cog):
         self.bot = bot
         self.database = OldDatabase()
 
+    @staticmethod
+    async def require_server(ctx: Context[Any]) -> discord.Guild | None:
+        if ctx.guild is None:
+            await ctx.reply("This command can only be used within Transpeak.")
+            return None
+        return ctx.guild
+
+    async def user_from_arg(self, ctx: Context[Any], server: discord.Guild, arg: str) -> discord.Member | discord.User | None:
+        if not arg.isdigit():
+            await ctx.reply("Please provide a valid user ID.")
+            return None
+        user = await get_member_or_user(server, self.bot, int(arg))
+        if user is None:
+            await ctx.reply("User not found.")
+            return None
+        return user
+
     @classmethod
     async def send_appeal_message(cls, member: discord.Member) -> None | str:
         try:
@@ -57,20 +74,13 @@ class Ban(commands.Cog):
     @permission_check(Level.STAFF)
     async def ban(self, ctx: Context[Any], *args: str) -> None:
 
-        server = ctx.guild
-        if server is None:
-            await ctx.reply("This command can only be used within Transpeak.")
-            return None
+        if not args: return None
 
-        if not args or not args[0].isdigit():
-            await ctx.reply("Please provide a valid user ID.")
-            return None
+        server = await self.require_server(ctx)
+        if server is None: return None
 
-        member = await get_member_or_user(server, self.bot, int(args[0]))
-
-        if not member:
-            await ctx.reply("User not found.")
-            return None
+        member = await self.user_from_arg(ctx, server, args[0])
+        if member is None: return None
 
         if isinstance(member, discord.Member) and has_permission(member, Level.HELPER):
             await ctx.reply("You cannot ban a staff member.")
@@ -127,19 +137,14 @@ class Ban(commands.Cog):
     @permission_check(Level.STAFF)
     async def bans(self, ctx: Context[Any], *args: str) -> None:
 
-        server = ctx.guild
-        if server is None:
-            await ctx.reply("This command can only be used within Transpeak.")
-            return None
+        server = await self.require_server(ctx)
+        if server is None: return None
 
         if not args: return None
 
-        if not args[0].isdigit():
-            await ctx.reply("Please provide a valid user ID.")
-            return None
-
-        user = await get_member_or_user(server, self.bot, int(args[0]))
-        user_name = user.display_name if user is not None else args[0]
+        user = await self.user_from_arg(ctx, server, args[0])
+        if user is None: return None
+        user_name = user.display_name
 
         async with self.database.dao_sessions() as db:
             bans = await db.ban.get_bans(int(args[0]))
@@ -156,21 +161,13 @@ class Ban(commands.Cog):
 
     async def unban(self, ctx: Context[Any], *args: str) -> None:
 
-        server = ctx.guild
-        if server is None:
-            await ctx.reply("This command can only be used within Transpeak.")
-            return None
+        server = await self.require_server(ctx)
+        if server is None: return None
 
         if not args: return None
 
-        if not args[0].isdigit():
-            await ctx.reply("Please provide a valid user ID.")
-            return None
-
-        user = await get_member_or_user(server, self.bot, int(args[0]))
-        if user is None:
-            await ctx.reply("User not found.")
-            return None
+        user = await self.user_from_arg(ctx, server, args[0])
+        if user is None: return None
 
         try:
             await server.fetch_ban(user)
