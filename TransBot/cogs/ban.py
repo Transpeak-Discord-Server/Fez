@@ -288,6 +288,7 @@ class Ban(commands.Cog):
         return None
 
     @commands.command(aliases=['removeban'])
+    @permission_check(Level.STAFF)
     async def remove_ban(self, ctx: Context[Any], *args: str) -> None:
 
         if not args: return None
