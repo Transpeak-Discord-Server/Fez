@@ -159,6 +159,8 @@ class Ban(commands.Cog):
 
         return None
 
+    @commands.command()
+    @permission_check(Level.STAFF)
     async def unban(self, ctx: Context[Any], *args: str) -> None:
 
         server = await self.require_server(ctx)
@@ -172,13 +174,13 @@ class Ban(commands.Cog):
         try:
             await server.fetch_ban(user)
         except discord.NotFound:
-            await ctx.reply(f"{user.display_name} is not banned.")
+            await ctx.reply(f"{user.mention} is not banned.")
             return None
 
         reason = "" if len(args) <= 1 else " ".join(args[1:])
 
         await server.unban(user, reason=reason)
-        await ctx.reply(f"{user.display_name} has been unbanned.")
+        await ctx.reply(f"{user.mention} has been unbanned.")
         return None
 
 async def setup(bot: commands.Bot) -> None:
