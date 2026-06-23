@@ -154,8 +154,35 @@ class Ban(commands.Cog):
 
         return None
 
+    async def unban(self, ctx: Context[Any], *args: str) -> None:
 
+        server = ctx.guild
+        if server is None:
+            await ctx.reply("This command can only be used within Transpeak.")
+            return None
 
+        if not args: return None
+
+        if not args[0].isdigit():
+            await ctx.reply("Please provide a valid user ID.")
+            return None
+
+        user = await get_member_or_user(server, self.bot, int(args[0]))
+        if user is None:
+            await ctx.reply("User not found.")
+            return None
+
+        try:
+            await server.fetch_ban(user)
+        except discord.NotFound:
+            await ctx.reply(f"{user.display_name} is not banned.")
+            return None
+
+        reason = "" if len(args) <= 1 else " ".join(args[1:])
+
+        await server.unban(user, reason=reason)
+        await ctx.reply(f"{user.display_name} has been unbanned.")
+        return None
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Ban(bot))
