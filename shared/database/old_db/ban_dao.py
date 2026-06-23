@@ -44,5 +44,4 @@ class OldBanDAO(BanDAO):
         ban_update = update(_Ban).where(_Ban.userid == str(user_id)).where(_Ban.timestamp == str(timestamp)).values(reason=updated_reason)
         result = cast(CursorResult[Any], await self.session.execute(ban_update))
         await self.session.commit()
-        print(result.rowcount)
         return result.rowcount == 1
