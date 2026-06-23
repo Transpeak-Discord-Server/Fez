@@ -1,14 +1,15 @@
+from typing import Any, Callable
+
 from discord import Member
 from discord.ext import commands
+
 from shared.utils import misc
 import os
-import json
 CURRENT_PATH = os.path.dirname(__file__)
-with open(os.path.join(CURRENT_PATH, '../shared/bot_config.json')) as f:
-    config = json.load(f)
+from shared.config import Config
 from enum import Enum
 
-rl_id = config['rl_id']
+rl_id = Config.json_config['rl_id']
 
 class Level(Enum):
     REGISTERED = 0
@@ -54,14 +55,14 @@ class UserPermissionsError(commands.CheckFailure):
 
 
 def has_permission(member: Member, permission_level: Level) -> bool:
-    user_roles = set(misc.get_role_ids(member.roles))
+    user_roles = set(misc.get_ids(member.roles))
     staff_roles = set(PermissionManager.get_roles(permission_level))
     return not user_roles.isdisjoint(staff_roles)
 
-
-def permission_check(permission_level: Level):
-    async def predicate(ctx: commands.Context):
-        if has_permission(ctx.author, permission_level):
+@commands.guild_only()
+def permission_check(permission_level: Level) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    async def predicate(ctx: commands.Context[Any]) -> bool:
+        if has_permission(ctx.author, permission_level): # type: ignore
             return True
         raise UserPermissionsError(permission_level)
 

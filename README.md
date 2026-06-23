@@ -30,10 +30,14 @@ pip install -r requirements.txt
 ```
 4. Create a `.env` file and add bot tokens
 ```dotenv
-FEZ_TOKEN= [Fez's token]
-TBOT_TOKEN= [TransBot's token]
+FEZ_TOKEN= # Fez's token
+TBOT_TOKEN= # TransBot's token
 ```
-5. Run it
+5. Create the `private` folder and add all private files to it
+
+See Private Files below for the required files
+
+6. Run it
 
    (from the project root)
 * Fez
@@ -44,4 +48,13 @@ python -m Fez.main
 ```shell
 python -m TransBot.main
 ```
-6. Hell yeah
+7. Hell yeah
+
+## Private Files
+
+```tree
+private
+└── images
+    ├── ash_staff_command.gif
+    └── luna_staff_command.png
+```
