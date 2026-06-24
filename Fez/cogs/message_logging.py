@@ -1,5 +1,5 @@
 import discord
-from attr import dataclass
+from dataclasses import dataclass
 from discord import TextChannel, DMChannel, GroupChannel
 from discord.abc import GuildChannel
 from discord.ext import commands
@@ -119,10 +119,6 @@ class MessageLogging(commands.Cog):
 
         await send_in.send(embed=embed)
         return None
-
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message) -> None:
-        await self.log(message, self.ON_MESSAGE_DETAILS.title, self.ON_MESSAGE_DETAILS.colour, message.content)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:

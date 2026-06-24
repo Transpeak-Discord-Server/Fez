@@ -38,6 +38,7 @@ class Fez(commands.Bot):
         'extensions.report',
         'extensions.manage_extensions',
         'extensions.contact_staff',
+        '.cogs.message_logging'
     ]
 
     async def setup_hook(self) -> None:
