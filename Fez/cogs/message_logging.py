@@ -23,9 +23,10 @@ class MessageLogging(commands.Cog):
     UNIFIED_NSFW_ID = config['ch_id']['#unified-chat-nsfw']
     STAFF_UNIFIED_ID = config['ch_id']['#unified-chat-staff']
     BOT_DMS_ID = config['ch_id']['#bot-dms']
+
     STAFF_CHANNELS = [config['ch_id'][x] for x in config['staff_channels']]
     NSFW_CHANNELS = [config['ch_id'][x] for x in config['nsfw_channels']]
-    IGNORED_CHANNELS = [config['ch_id'][x] for x in config['ignored_channels']]
+    IGNORED_CHANNELS = [config['ch_id'][x] for x in config['logging_ignored_channels']]
 
     ON_MESSAGE_DETAILS = LoggingDetails(
         title='Message sent 💬',
@@ -107,48 +108,37 @@ class MessageLogging(commands.Cog):
 
         return embed
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message) -> None:
+    async def log(self, message:discord.Message, title: str, colour: discord.Colour, description: str | None) -> None:
         if message.author.bot: return None
+        if description is None: return None
 
         send_in = self.log_message_in(message.channel)
         if not send_in: return None
 
-        embed = await self.log_embed(message, message.content, self.ON_MESSAGE_DETAILS.title, self.ON_MESSAGE_DETAILS.colour)
+        embed = await self.log_embed(message, description, title, colour)
 
         await send_in.send(embed=embed)
         return None
 
     @commands.Cog.listener()
-    async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
-        if after.author.bot: return None
+    async def on_message(self, message: discord.Message) -> None:
+        await self.log(message, self.ON_MESSAGE_DETAILS.title, self.ON_MESSAGE_DETAILS.colour, message.content)
 
-        send_in = self.log_message_in(after.channel)
-        if not send_in: return None
+    @commands.Cog.listener()
+    async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
 
         if before.pinned != after.pinned:
             description = f"Message was pinned"
         elif before.content != after.content:
             description = f"**Before**\n{before.content}\n**After**\n{after.content}"
         else:
-            return None
+            description = None
 
-        embed = await self.log_embed(after, description, self.ON_EDIT_DETAILS.title, self.ON_EDIT_DETAILS.colour)
-
-        await send_in.send(embed=embed)
-        return None
+        await self.log(after, self.ON_EDIT_DETAILS.title, self.ON_EDIT_DETAILS.colour, description)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message) -> None:
-        if message.author.bot: return None
-
-        send_in = self.log_message_in(message.channel)
-        if not send_in: return None
-
-        embed = await self.log_embed(message, message.content, self.ON_DELETE_DETAILS.title, self.ON_DELETE_DETAILS.colour)
-
-        await send_in.send(embed=embed)
-        return None
+        await self.log(message, self.ON_DELETE_DETAILS.title, self.ON_DELETE_DETAILS.colour, message.content)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(MessageLogging(bot))
