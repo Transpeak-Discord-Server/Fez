@@ -1,4 +1,5 @@
 import discord
+from attr import dataclass
 from discord import TextChannel, DMChannel, GroupChannel
 from discord.abc import GuildChannel
 from discord.ext import commands
@@ -11,15 +12,35 @@ import os
 CURRENT_PATH = os.path.dirname(__file__)
 config = Config.json_config
 
+@dataclass
+class LoggingDetails:
+    title: str
+    colour: discord.Colour
+
 class MessageLogging(commands.Cog):
 
     UNIFIED_SFW_ID = config['ch_id']['#unified-chat-sfw']
     UNIFIED_NSFW_ID = config['ch_id']['#unified-chat-nsfw']
     STAFF_UNIFIED_ID = config['ch_id']['#unified-chat-staff']
     BOT_DMS_ID = config['ch_id']['#bot-dms']
-    STAFF_CHANNELS = config["staff_channels"]
-    NSFW_CHANNELS = config["nsfw_channels"]
-    IGNORED_CHANNELS = config["ignored_channels"]
+    STAFF_CHANNELS = [config['ch_id'][x] for x in config['staff_channels']]
+    NSFW_CHANNELS = [config['ch_id'][x] for x in config['nsfw_channels']]
+    IGNORED_CHANNELS = [config['ch_id'][x] for x in config['ignored_channels']]
+
+    ON_MESSAGE_DETAILS = LoggingDetails(
+        title='Message sent 💬',
+        colour=discord.Colour.blue()
+    )
+
+    ON_EDIT_DETAILS = LoggingDetails(
+        title='Message edited 📝',
+        colour=discord.Colour.orange()
+    )
+
+    ON_DELETE_DETAILS = LoggingDetails(
+        title='Message deleted ❌',
+        colour=discord.Colour.red()
+    )
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot_dms: TextChannel | None = None
@@ -63,14 +84,15 @@ class MessageLogging(commands.Cog):
         return self.unified_sfw
 
     @staticmethod
-    async def log_embed(message: discord.Message, description: str, title: str) -> discord.Embed:
-        _is_wl = ':children_crossing:' if is_on_wl(message.author) else ''
+    async def log_embed(message: discord.Message, description: str, title: str, colour: discord.Colour) -> discord.Embed:
+        is_on_watchlist = ':children_crossing:' if is_on_wl(message.author) else ''
         embed = discord.Embed(
+            title=title,
             description=description,
-            color=discord.Color.blurple()
+            colour=colour
         )
 
-        embed.set_author(name=f'{_is_wl} {message.author.display_name} ({message.author.id})',
+        embed.set_author(name=f'{is_on_watchlist} {message.author.display_name} ({message.author.id})',
                          icon_url=message.author.display_avatar.url)
 
         if message.guild and not isinstance(message.channel, DMChannel | GroupChannel):
@@ -85,9 +107,24 @@ class MessageLogging(commands.Cog):
 
         return embed
 
-    async def log_edit(self, before: discord.Message, after: discord.Message, send_in: discord.TextChannel | None) -> None:
-        if not send_in:
-            return None
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        if message.author.bot: return None
+
+        send_in = self.log_message_in(message.channel)
+        if not send_in: return None
+
+        embed = await self.log_embed(message, message.content, self.ON_MESSAGE_DETAILS.title, self.ON_MESSAGE_DETAILS.colour)
+
+        await send_in.send(embed=embed)
+        return None
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
+        if after.author.bot: return None
+
+        send_in = self.log_message_in(after.channel)
+        if not send_in: return None
 
         if before.pinned != after.pinned:
             description = f"Message was pinned"
@@ -96,50 +133,21 @@ class MessageLogging(commands.Cog):
         else:
             return None
 
-        embed = await self.log_embed(after, description, "Message edited 📝")
+        embed = await self.log_embed(after, description, self.ON_EDIT_DETAILS.title, self.ON_EDIT_DETAILS.colour)
 
         await send_in.send(embed=embed)
-        return None
-
-    async def log_send(self, message: discord.Message, send_in: discord.TextChannel | None) -> None:
-        if not send_in:
-            return None
-
-        embed = await self.log_embed(message, message.content, "Message sent 💬")
-
-        await send_in.send(embed=embed)
-        return None
-
-    async def log_delete(self, message: discord.Message, send_in: discord.TextChannel | None) -> None:
-        if not send_in:
-            return None
-
-        embed = await self.log_embed(message, message.content, "Message deleted ❌")
-
-        await send_in.send(embed=embed)
-        return None
-
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message) -> None:
-
-        if message.author.bot:
-            return None
-        await self.log_send(message, self.log_message_in(message.channel))
-        return None
-
-    @commands.Cog.listener()
-    async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
-        if after.author.bot: return None
-
-        await self.log_edit(before, after, self.log_message_in(after.channel))
         return None
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message) -> None:
+        if message.author.bot: return None
 
-        if message.author.bot:
-            return None
-        await self.log_delete(message, self.log_message_in(message.channel))
+        send_in = self.log_message_in(message.channel)
+        if not send_in: return None
+
+        embed = await self.log_embed(message, message.content, self.ON_DELETE_DETAILS.title, self.ON_DELETE_DETAILS.colour)
+
+        await send_in.send(embed=embed)
         return None
 
 async def setup(bot: commands.Bot) -> None:
