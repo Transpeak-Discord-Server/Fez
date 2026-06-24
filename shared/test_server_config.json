@@ -223,6 +223,15 @@
         "#staff-on-leave",
         "#staff-starboard"
     ],
+    "nsfw_channels": [
+
+    ],
+    "staff_channels":  [
+
+    ],
+    "logging_ignored_channels": [
+
+    ],
     "vc_id": {
         "AFK": 119354402770255873,
         "Event Voice": 206199284528316416,
