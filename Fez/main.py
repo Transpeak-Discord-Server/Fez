@@ -14,42 +14,42 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Any
+
 import discord
 import os
 from pathlib import Path
 from discord.ext import commands
 from dotenv import load_dotenv
-from shared.utils.permissions import UserPermissionsError
+
+from shared.utils.misc import shared_error
+
+
+
 
 class Fez(commands.Bot):
 
-    cogs = [
+    bot_cogs = [
         '.cogs.staff_commands',
     ]
 
-    async def setup_hook(self):
-        for cog in self.cogs:
+    async def setup_hook(self) -> None:
+        for cog in self.bot_cogs:
             await self.load_extension(cog, package=__package__)
             print(f"Loaded cog: {cog}")
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         print(f'{self.user} has finished booting.')
 
-    async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandNotFound):
-            return None
-        if isinstance(error, UserPermissionsError):
-            if error.required_perms == "new":
-                return ctx.reply("You need to be registered to do that! Please ping a staff member for help.")
-            return ctx.reply(f"You need to be a {error.required_perms} to do that!")
-        return print(error)
+    async def on_command_error(self, ctx: commands.Context[Any], error: Exception) -> None:
+        await shared_error(ctx, error)
 
 
 
 class Main:
     FEZ_DIR = Path(__file__).resolve().parent
 
-    def run(self):
+    def run(self) -> None:
         load_dotenv(dotenv_path=self.FEZ_DIR / '..' / '.env')
 
         intents = discord.Intents.all()

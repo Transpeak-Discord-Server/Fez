@@ -14,8 +14,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Any, Callable
+
 from discord import Member
 from discord.ext import commands
+
 from shared.utils import misc
 import os
 CURRENT_PATH = os.path.dirname(__file__)
@@ -72,10 +75,10 @@ def has_permission(member: Member, permission_level: Level) -> bool:
     staff_roles = set(PermissionManager.get_roles(permission_level))
     return not user_roles.isdisjoint(staff_roles)
 
-
-def permission_check(permission_level: Level):
-    async def predicate(ctx: commands.Context):
-        if has_permission(ctx.author, permission_level):
+@commands.guild_only()
+def permission_check(permission_level: Level) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    async def predicate(ctx: commands.Context[Any]) -> bool:
+        if has_permission(ctx.author, permission_level): # type: ignore
             return True
         raise UserPermissionsError(permission_level)
 
