@@ -1,14 +1,18 @@
 from typing import Any, Callable
 
+import discord
 from discord import Member
 from discord.ext import commands
+import os
 
 from shared.utils import misc
-import os
+from shared.utils.misc import get_member_if_exists
+
 CURRENT_PATH = os.path.dirname(__file__)
 from shared.config import Config
 from enum import Enum
 
+bot_config = Config.json_config
 rl_id = Config.json_config['rl_id']
 
 class Level(Enum):
@@ -59,10 +63,12 @@ def has_permission(member: Member, permission_level: Level) -> bool:
     staff_roles = set(PermissionManager.get_roles(permission_level))
     return not user_roles.isdisjoint(staff_roles)
 
-@commands.guild_only()
 def permission_check(permission_level: Level) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     async def predicate(ctx: commands.Context[Any]) -> bool:
-        if has_permission(ctx.author, permission_level): # type: ignore
+        member = ctx.author
+        if isinstance(member, discord.User) and ctx.guild is None:
+            member = await get_member_if_exists(ctx.bot.get_guild(bot_config['server_id']), ctx.author.id)
+        if isinstance(member, discord.Member) and has_permission(member, permission_level):
             return True
         raise UserPermissionsError(permission_level)
 
