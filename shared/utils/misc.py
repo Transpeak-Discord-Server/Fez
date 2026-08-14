@@ -22,6 +22,8 @@ def get_week() -> int:
     b = datetime.now()
     return int((b - a).total_seconds() / (7 * 24 * 60 * 60))
 
+# Get member / user
+
 async def get_member_or_user(server: discord.Guild, bot: discord.Client, user_id: int) -> Member | User | None:
     try:
         return server.get_member(user_id) or await server.fetch_member(user_id)
@@ -30,6 +32,11 @@ async def get_member_or_user(server: discord.Guild, bot: discord.Client, user_id
         return bot.get_user(user_id) or await bot.fetch_user(user_id)
     except discord.NotFound:
         return None
+
+async def get_member_if_exists(server: discord.Guild, user_id: int) -> Member | None:
+    try:
+        return server.get_member(user_id) or await server.fetch_member(user_id)
+    except discord.NotFound: return None
 
 # format time
 
