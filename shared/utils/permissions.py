@@ -6,7 +6,6 @@ from discord.ext import commands
 import os
 
 from shared.utils import misc
-from shared.utils.misc import get_member_if_exists
 
 CURRENT_PATH = os.path.dirname(__file__)
 from shared.config import Config
@@ -67,7 +66,7 @@ def permission_check(permission_level: Level) -> Callable[[Callable[..., Any]], 
     async def predicate(ctx: commands.Context[Any]) -> bool:
         member = ctx.author
         if isinstance(member, discord.User) and ctx.guild is None:
-            member = await get_member_if_exists(ctx.bot.get_guild(bot_config['server_id']), ctx.author.id)
+            member = await misc.get_member_if_exists(ctx.bot.get_guild(bot_config['server_id']), ctx.author.id)
         if isinstance(member, discord.Member) and has_permission(member, permission_level):
             return True
         raise UserPermissionsError(permission_level)
