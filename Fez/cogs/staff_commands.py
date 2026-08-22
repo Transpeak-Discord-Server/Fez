@@ -12,7 +12,7 @@ from discord.ext.commands import Context
 
 from shared.config import Config
 
-PROJECT_PATH = Path(os.path.dirname(__file__)).parent
+PROJECT_PATH = Path(os.path.dirname(__file__)).parent.parent
 
 class StaffCommands(commands.Cog):
 
@@ -118,6 +118,7 @@ class StaffCommands(commands.Cog):
     # Katelyn
     KATELYN_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/katelyn.gif')
 
+    @commands.command()
     async def katelyn(self, ctx: commands.Context[Any]) -> None:
         with open(self.KATELYN_IMAGE_PATH, 'rb') as f:
             await ctx.reply(file=discord.File(f, 'katelyn_staff_command.gif'))
@@ -126,6 +127,7 @@ class StaffCommands(commands.Cog):
     # Icarus
     ICARUS_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/icarus.gif')
 
+    @commands.command()
     async def icarus(self, ctx: commands.Context[Any]) -> None:
         with open(self.ICARUS_IMAGE_PATH, 'rb') as f:
             await ctx.reply(file=discord.File(f, 'icarus_staff_command.gif'))
