@@ -110,7 +110,7 @@ class ContactStaff(commands.GroupCog):
         msg_embed.set_author(name=author.name, icon_url=author.display_avatar.url)
         await send_in.send(embed=msg_embed)
 
-    async def get_msg_details(self, ctx: commands.Context[Any], *args) -> TicketMessageDetails | None:
+    async def get_msg_details(self, ctx: commands.Context[Any], args: tuple[str, ...]) -> TicketMessageDetails | None:
         server = ctx.guild
         if server is None:
             await ctx.reply("This command can only be used within Transpeak!")
