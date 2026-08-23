@@ -44,7 +44,7 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
 
-        report_channel = self.reports_over18_channel if self.over_18.value == "Yes" else self.reports_channel
+        report_channel = self.reports_over18_channel if self.over_18.value.lower() == "yes" else self.reports_channel
 
         if isinstance(self.message.channel, DMChannel | PartialMessageable): return None
 
