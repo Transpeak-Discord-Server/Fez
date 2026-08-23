@@ -66,7 +66,7 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
             f"{self.staff_alert.mention if self.staff_alert is not None else ''}"
         )
 
-        await interaction.response.send_message("Report submitted", ephemeral=True)
+        await interaction.response.send_message("Report submitted! Staff may reach out if they need further information.", ephemeral=True)
         return None
 
 async def report_message(interaction: discord.Interaction, message: discord.Message) -> None:
