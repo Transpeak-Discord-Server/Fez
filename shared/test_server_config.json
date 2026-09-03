@@ -1,5 +1,5 @@
 {
-    "server_id": 117664143837888519,
+    "server_id": 1024218455190290432,
     "owner_id": 87493043594207232,
     "bot_lord": 297368243985711105,
     "testing_account": 0,
@@ -387,6 +387,9 @@
         "-",
         "a-director"
     ],
+    "cat_id": {
+        "tickets": 1024218460080848913
+    },
     "reg_rl_id": [
         "genderfluid",
         "ze",

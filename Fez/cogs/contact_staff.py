@@ -2,7 +2,7 @@ import dataclasses
 from typing import Any, cast
 
 import discord
-from discord import TextChannel, app_commands, DMChannel
+from discord import TextChannel, app_commands, DMChannel, Guild, Role, CategoryChannel
 from discord.ext import commands
 
 from shared.config import Config
@@ -10,6 +10,7 @@ from shared.utils.misc import get_member_or_user
 from shared.utils.permissions import permission_check, Level
 
 config = Config.json_config
+
 
 @dataclasses.dataclass
 class TicketMessageDetails:
@@ -19,14 +20,20 @@ class TicketMessageDetails:
     staff_member: discord.User | discord.Member
     message: str
 
-class ContactStaff(commands.GroupCog):
 
+class ContactStaff(commands.GroupCog):
     ticket_channels: list[TextChannel]
+    server: Guild
+    staff_role: Role
+    bot_role: Role
+    staff_alert_role: Role
+    ticket_category: CategoryChannel
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-        server = bot.get_guild(config['server_id'])
+    async def cog_load(self) -> None:
+        server = await self.bot.fetch_guild(config['server_id'])
         if server is None:
             raise ValueError("Could not find server from server_id in config")
         self.server = server
@@ -40,17 +47,21 @@ class ContactStaff(commands.GroupCog):
         self.bot_role = bot_role
         self.staff_alert_role = staff_alert_role
 
-    async def cog_load(self) -> None:
+        tickets_category = await self.server.fetch_channel(config['cat_id']['tickets'])
+        if not isinstance(tickets_category, CategoryChannel):
+            raise ValueError("Could not find tickets category from id in config")
+        self.ticket_category = tickets_category
+
         server_channels = await self.server.fetch_channels()
         self.ticket_channels = cast(list[TextChannel], [
             x for x in server_channels
             if isinstance(x, TextChannel)
-               and x.category is not None
-               and x.category.id == config['cat_id']['tickets']])
-        self.bot.tree.add_command(self.contact_staff)
+               and x.category == self.ticket_category
+        ])
+        await self.bot.tree.sync()
 
     async def cog_unload(self) -> None:
-        self.bot.tree.remove_command("Open ticket")
+        self.bot.tree.remove_command("contact-staff")
 
     async def get_user(self, server: discord.Guild, channel: TextChannel) -> discord.Member | discord.User | None:
         description = channel.topic
@@ -63,16 +74,18 @@ class ContactStaff(commands.GroupCog):
 
         return await get_member_or_user(server, self.bot, user_id)
 
-    @app_commands.command(name="Open ticket")
+    @app_commands.command()
     @app_commands.describe(message="Your initial message to staff")
     async def contact_staff(self, interaction: discord.Interaction[Any], message: str) -> None:
 
         ticket_name = interaction.user.name
         if any(x.name == ticket_name for x in self.ticket_channels):
-            await interaction.response.send_message("You already have a ticket open with staff. Please message me in DMs to contact staff!")
+            await interaction.response.send_message(
+                "You already have a ticket open with staff. Please message me in DMs to contact staff!")
             return None
 
-        channel = await self.server.create_text_channel(name=ticket_name, category=config['cat_id']['tickets'], topic=f"ModMail Ticket {interaction.user.id} (Please do not change this)")
+        channel = await self.server.create_text_channel(name=ticket_name, category=self.ticket_category,
+                                                        topic=f"ModMail Ticket {interaction.user.id} (Please do not change this)")
         self.ticket_channels.append(channel)
 
         await channel.set_permissions(self.staff_role, view_channel=True, send_messages=True)
@@ -83,15 +96,16 @@ class ContactStaff(commands.GroupCog):
             description=interaction.message,
             colour=discord.Colour.green()
         )
-        msg_embed.set_author(name=f"{interaction.user.name} | {interaction.user.id}", icon_url=interaction.user.display_avatar.url)
+        msg_embed.set_author(name=f"{interaction.user.name} | {interaction.user.id}",
+                             icon_url=interaction.user.display_avatar.url)
         await channel.send(self.staff_alert_role.mention, embed=msg_embed)
 
         await interaction.response.send_message("Ticket opened. Staff will be with you shortly!")
         return None
 
-
     @staticmethod
-    async def send_msg_received(message: str, author: discord.User | discord.Member, send_in: discord.abc.Messageable) -> None:
+    async def send_msg_received(message: str, author: discord.User | discord.Member,
+                                send_in: discord.abc.Messageable) -> None:
         msg_embed = discord.Embed(
             title="Message Received",
             description=message,
@@ -101,7 +115,8 @@ class ContactStaff(commands.GroupCog):
         await send_in.send(embed=msg_embed)
 
     @staticmethod
-    async def send_msg_sent(message: str, author: discord.User | discord.Member, send_in: discord.abc.Messageable) -> None:
+    async def send_msg_sent(message: str, author: discord.User | discord.Member,
+                            send_in: discord.abc.Messageable) -> None:
         msg_embed = discord.Embed(
             title="Message Sent",
             description=message,
@@ -120,7 +135,7 @@ class ContactStaff(commands.GroupCog):
         if not isinstance(channel, TextChannel): return None
 
         category = channel.category
-        if category is None or category.id != config['cat_id']['tickets']: return None
+        if category is None or category != self.ticket_category: return None
 
         user = await self.get_user(server, channel)
         if user is None:
@@ -166,7 +181,6 @@ class ContactStaff(commands.GroupCog):
 
         return None
 
-
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
@@ -183,3 +197,7 @@ class ContactStaff(commands.GroupCog):
         await self.send_msg_sent(message.content, message.author, user)
 
         return None
+
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(ContactStaff(bot))
+    return None

@@ -15,6 +15,7 @@ class Fez(commands.Bot):
 
     bot_cogs = [
         '.cogs.staff_commands',
+        '.cogs.contact_staff'
     ]
 
     async def setup_hook(self) -> None:
