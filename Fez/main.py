@@ -33,6 +33,7 @@ class Fez(commands.Bot):
         'extensions.staff_commands',
         'extensions.report',
         'extensions.manage_extensions'
+        '.cogs.contact_staff'
     ]
 
     async def setup_hook(self) -> None:
