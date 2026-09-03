@@ -32,7 +32,7 @@ class Fez(commands.Bot):
     bot_extensions = [
         'extensions.staff_commands',
         'extensions.report',
-        'extensions.manage_extensions'
+        'extensions.manage_extensions',
         '.cogs.contact_staff'
     ]
 
