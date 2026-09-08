@@ -1,14 +1,33 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Any, Callable
 
+import discord
 from discord import Member
 from discord.ext import commands
+import os
 
 from shared.utils import misc
-import os
+
 CURRENT_PATH = os.path.dirname(__file__)
 from shared.config import Config
 from enum import Enum
 
+bot_config = Config.json_config
 rl_id = Config.json_config['rl_id']
 
 class Level(Enum):
@@ -59,10 +78,12 @@ def has_permission(member: Member, permission_level: Level) -> bool:
     staff_roles = set(PermissionManager.get_roles(permission_level))
     return not user_roles.isdisjoint(staff_roles)
 
-@commands.guild_only()
 def permission_check(permission_level: Level) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     async def predicate(ctx: commands.Context[Any]) -> bool:
-        if has_permission(ctx.author, permission_level): # type: ignore
+        member = ctx.author
+        if isinstance(member, discord.User) and ctx.guild is None:
+            member = await misc.get_member_if_exists(ctx.bot.get_guild(bot_config['server_id']), ctx.author.id)
+        if isinstance(member, discord.Member) and has_permission(member, permission_level):
             return True
         raise UserPermissionsError(permission_level)
 

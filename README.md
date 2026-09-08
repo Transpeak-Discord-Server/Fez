@@ -4,11 +4,10 @@ Fez and TransBot Discord bots for the Transpeak Discord server.
 ## Setup
 
 ### Windows
+
 Windows users should use WSL and follow the instructions for Linux.
 
 ### Linux
-
-There is a `setup.sh` script that will set up the project for you. You will still need to add the bot tokens to `.env`. The script only works on Debian-based distros.   
 
 1. Install system dependencies
 

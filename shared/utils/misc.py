@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from functools import singledispatch
 from datetime import datetime
 from typing import Iterable, Protocol, Any
@@ -5,6 +21,7 @@ from typing import Iterable, Protocol, Any
 import discord
 from discord import Member, User
 from discord.ext import commands
+from discord.ext.commands import Context
 
 from shared.utils.permissions import UserPermissionsError, Level
 
@@ -22,6 +39,8 @@ def get_week() -> int:
     b = datetime.now()
     return int((b - a).total_seconds() / (7 * 24 * 60 * 60))
 
+# Get member / user
+
 async def get_member_or_user(server: discord.Guild, bot: discord.Client, user_id: int) -> Member | User | None:
     try:
         return server.get_member(user_id) or await server.fetch_member(user_id)
@@ -30,6 +49,11 @@ async def get_member_or_user(server: discord.Guild, bot: discord.Client, user_id
         return bot.get_user(user_id) or await bot.fetch_user(user_id)
     except discord.NotFound:
         return None
+
+async def get_member_if_exists(server: discord.Guild, user_id: int) -> Member | None:
+    try:
+        return server.get_member(user_id) or await server.fetch_member(user_id)
+    except discord.NotFound: return None
 
 # format time
 
@@ -54,3 +78,9 @@ async def shared_error(ctx: commands.Context[Any], error: Exception):
         return None
     print(error)
     return None
+
+async def require_server(ctx: Context[Any]) -> discord.Guild | None:
+    if ctx.guild is None:
+        await ctx.reply("This command can only be used within Transpeak.")
+        return None
+    return ctx.guild
