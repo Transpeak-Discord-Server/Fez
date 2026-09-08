@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Any
 
 import discord
@@ -12,7 +28,7 @@ from discord.ext.commands import Context
 
 from shared.config import Config
 
-PROJECT_PATH = Path(os.path.dirname(__file__)).parent
+PROJECT_PATH = Path(os.path.dirname(__file__)).parent.parent
 
 class StaffCommands(commands.Cog):
 
@@ -50,7 +66,7 @@ class StaffCommands(commands.Cog):
     async def ash(self, ctx: commands.Context[Any]) -> None:
         with open(self.ASH_IMAGE_PATH, 'rb') as f:
             await ctx.reply(file=discord.File(f, self.ASH_IMAGE_PATH))
-            return None
+        return None
 
     # Zoey
     ZOEY_DATA = Config.json_config['ZOEY_DATA']
@@ -75,9 +91,12 @@ class StaffCommands(commands.Cog):
         return None
 
     # Cat
+    CAT_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/night.gif')
+
     @commands.command()
     async def cat(self, ctx: commands.Context[Any]) -> None:
-        await ctx.reply("https://tenor.com/view/15447330")
+        with open(self.CAT_IMAGE_PATH, 'rb') as f:
+            await ctx.reply(file=discord.File(f, 'night_staff_command.gif'))
         return None
 
     # Luna
@@ -87,20 +106,47 @@ class StaffCommands(commands.Cog):
     async def luna(self, ctx: commands.Context[Any]) -> None:
         with open(self.LUNA_IMAGE_PATH, 'rb') as f:
             await ctx.reply(file=discord.File(f, 'luna_staff_command.png'))
-            return None
+        return None
 
     # Simon
     SIMON_USER_ID = 1383285080700747837
 
     @commands.command()
     async def simon(self, ctx: commands.Context[Any]) -> None:
-        await ctx.reply(f"<@{self.SIMON_USER_ID}> woof!")
+        await ctx.reply(f"<@{self.SIMON_USER_ID}> awoo!")
         return None
 
     # Ren
     @commands.command()
     async def ren(self, ctx: commands.Context[Any]) -> None:
         await ctx.reply("yo")
+        return None
+
+    # Crymson
+    CRYMSON_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/frank-iero-six-seven.gif')
+
+    @commands.command()
+    async def crymson(self, ctx: commands.Context[Any]) -> None:
+        with open(self.CRYMSON_IMAGE_PATH, 'rb') as f:
+            await ctx.reply(file=discord.File(f, 'crymson_staff_command.gif'))
+        return None
+
+    # Katelyn
+    KATELYN_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/katelyn.gif')
+
+    @commands.command()
+    async def katelyn(self, ctx: commands.Context[Any]) -> None:
+        with open(self.KATELYN_IMAGE_PATH, 'rb') as f:
+            await ctx.reply(file=discord.File(f, 'katelyn_staff_command.gif'))
+        return None
+
+    # Icarus
+    ICARUS_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/icarus.gif')
+
+    @commands.command()
+    async def icarus(self, ctx: commands.Context[Any]) -> None:
+        with open(self.ICARUS_IMAGE_PATH, 'rb') as f:
+            await ctx.reply(file=discord.File(f, 'icarus_staff_command.gif'))
         return None
 
 

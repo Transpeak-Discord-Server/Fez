@@ -11,7 +11,7 @@ from shared.config import Config
 from shared.database.data import BanData
 from shared.database.old_db.database import OldDatabase
 from shared.utils.errors import ConfigError
-from shared.utils.misc import get_member_or_user
+from shared.utils.misc import get_member_or_user, require_server
 from shared.utils.permissions import permission_check, Level, has_permission
 
 
@@ -23,13 +23,6 @@ class Ban(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.database = OldDatabase()
-
-    @staticmethod
-    async def require_server(ctx: Context[Any]) -> discord.Guild | None:
-        if ctx.guild is None:
-            await ctx.reply("This command can only be used within Transpeak.")
-            return None
-        return ctx.guild
 
     async def user_from_arg(self, ctx: Context[Any], server: discord.Guild, arg: str) -> discord.Member | discord.User | None:
         if not arg.isdigit():
@@ -115,7 +108,7 @@ class Ban(commands.Cog):
 
         if not args: return None
 
-        server = await self.require_server(ctx)
+        server = await require_server(ctx)
         if server is None: return None
 
         member = await self.user_from_arg(ctx, server, args[0])
@@ -165,7 +158,7 @@ class Ban(commands.Cog):
     @permission_check(Level.STAFF)
     async def bans(self, ctx: Context[Any], *args: str) -> None:
 
-        server = await self.require_server(ctx)
+        server = await require_server(ctx)
         if server is None: return None
 
         if not args: return None
@@ -191,7 +184,7 @@ class Ban(commands.Cog):
     @permission_check(Level.STAFF)
     async def unban(self, ctx: Context[Any], *args: str) -> None:
 
-        server = await self.require_server(ctx)
+        server = await require_server(ctx)
         if server is None: return None
 
         if not args: return None
@@ -249,7 +242,7 @@ class Ban(commands.Cog):
 
         if not args: return None
 
-        server = await self.require_server(ctx)
+        server = await require_server(ctx)
         if server is None: return None
 
         if not args[0].isdigit():
@@ -296,7 +289,7 @@ class Ban(commands.Cog):
         if not args[0].isdigit():
             await ctx.reply("Please provide a valid message ID.")
 
-        server = await self.require_server(ctx)
+        server = await require_server(ctx)
         if not server: return None
 
         ban_info = await self.get_ban_message(ctx, int(args[0]))

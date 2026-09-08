@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from functools import singledispatch
 from datetime import datetime
 from typing import Iterable, Protocol, Any
@@ -5,6 +21,7 @@ from typing import Iterable, Protocol, Any
 import discord
 from discord import Member, User
 from discord.ext import commands
+from discord.ext.commands import Context
 
 from shared.utils.permissions import UserPermissionsError, Level
 
@@ -61,3 +78,9 @@ async def shared_error(ctx: commands.Context[Any], error: Exception):
         return None
     print(error)
     return None
+
+async def require_server(ctx: Context[Any]) -> discord.Guild | None:
+    if ctx.guild is None:
+        await ctx.reply("This command can only be used within Transpeak.")
+        return None
+    return ctx.guild
