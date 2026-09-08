@@ -31,6 +31,7 @@ class Fez(commands.Bot):
 
     bot_cogs = [
         '.cogs.staff_commands',
+        '.cogs.message_logging',
         '.cogs.report'
     ]
 
