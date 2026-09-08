@@ -87,7 +87,8 @@
         "#staff-discussion": 737089778717032489,
         "#staff-discussion-two": 737089808756768791,
         "#staff-discussion-three": 1141937830881402930,
-        "#staff-orientation": 896813370773209139
+        "#staff-orientation": 896813370773209139,
+        "ticket-log": 1175185653231792170
     },
     "BASE_URL": "https://discord.com/channels/117664143837888519",
     "channel_url": {

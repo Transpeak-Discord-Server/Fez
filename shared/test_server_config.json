@@ -85,7 +85,8 @@
         "#staff-off-my-chest": 1024218459237789742,
         "#lead-chat": 1024218459896283167,
         "#staff-discussion": 1024218459401375860,
-        "#staff-orientation": 896813370773209139
+        "#staff-orientation": 896813370773209139,
+        "ticket-log": 1024218460080848914
     },
     "BASE_URL": "https://discord.com/channels/117664143837888519",
     "channel_url": {
