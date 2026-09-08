@@ -2,7 +2,7 @@ import dataclasses
 import io
 import textwrap
 from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 import discord
 from discord import TextChannel, app_commands, DMChannel, Guild, Role, CategoryChannel
@@ -66,13 +66,19 @@ class ContactStaff(commands.GroupCog):
 
         await self.bot.tree.sync()
 
-    def load_ticket_channels(self) -> None:
+    async def load_ticket_channels(self) -> None:
+        server = self.bot.get_guild(config['server_id'])
+        if server is None:
+            raise ValueError("Could not find server from server_id in config")
+        self.server = server
+
         tickets_category = self.server.get_channel(config['cat_id']['tickets'])
+        print(tickets_category)
         if not isinstance(tickets_category, CategoryChannel):
             raise ValueError("Could not find tickets category from id in config")
         self.ticket_category = tickets_category
-
-        self.ticket_channels = self.ticket_category.text_channels
+        self.ticket_channels = tickets_category.text_channels
+        print(self.ticket_channels)
 
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command("contact-staff")
@@ -160,18 +166,22 @@ class ContactStaff(commands.GroupCog):
         message = " ".join(args)
         return TicketMessageDetails(server, channel, user, staff_member, message)
 
-    def get_ticket_channel(self, user: discord.User | discord.Member) -> discord.TextChannel | None:
-        if not self.ticket_channels: self.load_ticket_channels()
+    async def get_ticket_channel(self, user: discord.User | discord.Member) -> discord.TextChannel | None:
+        if not self.ticket_channels: await self.load_ticket_channels()
         for channel in self.ticket_channels:
 
             topic = channel.topic
-            if topic is None: return None
+            print(f"topic: {topic}")
+            if topic is None: continue
 
             topic_split = topic.split(" ")
-            if len(topic_split) < 3: return None
+            print(f"topic split: {topic_split}")
+            if len(topic_split) < 3: continue
 
             channel_user_id = topic_split[2]
-            if not channel_user_id.isdigit(): return None
+            print(f"channel user id: {channel_user_id}")
+            if not channel_user_id.isdigit(): continue
+            print (f"user id: {user.id}, channel user id: {int(channel_user_id)}")
             if user.id == int(channel_user_id): return channel
         return None
 
@@ -257,7 +267,7 @@ class ContactStaff(commands.GroupCog):
 
         user = message.author
 
-        ticket_channel = self.get_ticket_channel(user)
+        ticket_channel = await self.get_ticket_channel(user)
         if ticket_channel is None: return None
 
         await self.send_msg_received(message.content, message.author, ticket_channel)
