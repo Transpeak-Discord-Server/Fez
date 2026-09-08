@@ -202,7 +202,9 @@ class Ban(commands.Cog):
         audit_log_reason = f"Unbanned by {ctx.author.display_name} with reason: {reason}"
 
         await server.unban(user, reason=audit_log_reason)
-        await ctx.reply(f"{user.mention} has been unbanned.{f"\nReason: {reason}" if reason is not None else ""}")
+        
+        ban_reason = f"\nReason: {reason}" if reason is not None else ""
+        await ctx.reply(f"{user.mention} has been unbanned.{ban_reason}")
         return None
 
     async def get_ban_message(self, ctx: Context[Any], message_id: int) -> tuple[discord.Message, discord.Embed, datetime, int] | None:

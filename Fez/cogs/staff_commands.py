@@ -81,7 +81,7 @@ class StaffCommands(commands.Cog):
         member = server.get_member(member_int) if member_int else None
         chosen_obj_1, chosen_obj_2 = sample(self.ZOEY_DATA['ZOEY_OBJECTS'], 2)
 
-        await ctx.reply(f"Hello{" " + member.display_name if member else ""}, this is Fez from Transpeak's "
+        await ctx.reply(f"Hello{' ' + member.display_name if member else ''}, this is Fez from Transpeak's "
            f"{choice(self.ZOEY_DATA['ZOEY_JOB_TITLES'])}. I'm here to inform you that we have decided to banish "
            f"you to {choice(self.ZOEY_DATA['ZOEY_LOCATIONS'])}. {choice(self.ZOEY_DATA['ZOEY_REACTION'])} you have a chance at "
            f"redemption by finding {choice(self.ZOEY_DATA['ZOEY_STRUCTURES'])} and collecting "
