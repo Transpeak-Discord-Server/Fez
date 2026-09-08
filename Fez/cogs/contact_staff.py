@@ -1,9 +1,13 @@
 import dataclasses
+import io
+import textwrap
+from datetime import datetime
 from typing import Any, cast
 
 import discord
 from discord import TextChannel, app_commands, DMChannel, Guild, Role, CategoryChannel
 from discord.ext import commands
+from discord.ext.commands import Context
 
 from shared.config import Config
 from shared.utils.misc import get_member_or_user
@@ -28,6 +32,7 @@ class ContactStaff(commands.GroupCog):
     bot_role: Role
     staff_alert_role: Role
     ticket_category: CategoryChannel
+    ticket_log_channel: TextChannel
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -52,13 +57,22 @@ class ContactStaff(commands.GroupCog):
             raise ValueError("Could not find tickets category from id in config")
         self.ticket_category = tickets_category
 
-        server_channels = await self.server.fetch_channels()
-        self.ticket_channels = cast(list[TextChannel], [
-            x for x in server_channels
-            if isinstance(x, TextChannel)
-               and x.category == self.ticket_category
-        ])
+        ticket_log_channel = await self.server.fetch_channel(config['ch_id']['ticket-log'])
+        if not isinstance(ticket_log_channel, TextChannel):
+            raise ValueError("Could not find ticket log channel from id in config")
+        self.ticket_log_channel = ticket_log_channel
+
+        self.ticket_channels = []
+
         await self.bot.tree.sync()
+
+    def load_ticket_channels(self) -> None:
+        tickets_category = self.server.get_channel(config['cat_id']['tickets'])
+        if not isinstance(tickets_category, CategoryChannel):
+            raise ValueError("Could not find tickets category from id in config")
+        self.ticket_category = tickets_category
+
+        self.ticket_channels = self.ticket_category.text_channels
 
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command("contact-staff")
@@ -93,7 +107,7 @@ class ContactStaff(commands.GroupCog):
 
         msg_embed = discord.Embed(
             title="New Ticket",
-            description=interaction.message,
+            description=message,
             colour=discord.Colour.green()
         )
         msg_embed.set_author(name=f"{interaction.user.name} | {interaction.user.id}",
@@ -146,6 +160,21 @@ class ContactStaff(commands.GroupCog):
         message = " ".join(args)
         return TicketMessageDetails(server, channel, user, staff_member, message)
 
+    def get_ticket_channel(self, user: discord.User | discord.Member) -> discord.TextChannel | None:
+        if not self.ticket_channels: self.load_ticket_channels()
+        for channel in self.ticket_channels:
+
+            topic = channel.topic
+            if topic is None: return None
+
+            topic_split = topic.split(" ")
+            if len(topic_split) < 3: return None
+
+            channel_user_id = topic_split[2]
+            if not channel_user_id.isdigit(): return None
+            if user.id == int(channel_user_id): return channel
+        return None
+
     @commands.command()
     @permission_check(Level.STAFF)
     async def reply(self, ctx: commands.Context[Any], *args: str) -> None:
@@ -168,6 +197,27 @@ class ContactStaff(commands.GroupCog):
 
         return None
 
+    @staticmethod
+    async def msg_to_string(ctx: Context[Any], message: discord.Message) -> str | None:
+        message_author = f"{message.author.name} ({message.author.id})"
+
+        embed_str: str | None = None
+        if len(message.embeds) != 0:
+            embed = message.embeds[0]
+            if embed.title == "Message sent": return None
+            embed_str = embed.description
+
+        reply = ""
+        if message.reference is not None and message.reference.message_id is not None:
+            reply_message = await ctx.fetch_message(message.reference.message_id)
+            reply_message_user = reply_message.author.name
+            shortened_reply_message = textwrap.shorten(reply_message.content, 10, placeholder="...")
+            reply = f" (In reply to @{reply_message_user}: \"{shortened_reply_message}\")"
+
+        message_content = message.content if not embed_str else f"Message received - {embed_str}"
+
+        return f"{message_author}{reply}: {message_content}"
+
     @commands.command()
     @permission_check(Level.STAFF)
     async def close(self, ctx: commands.Context[Any], *args: str) -> None:
@@ -177,7 +227,25 @@ class ContactStaff(commands.GroupCog):
 
         await ctx.reply("Closing ticket...")
 
-        # TODO: archive and delete ticket channel
+        ticket_messages = ticket_details.channel.history(oldest_first=True)
+        ticket_str = ""
+        async for message in ticket_messages:
+            message_str = await self.msg_to_string(ctx, message)
+            if message_str is not None: ticket_str += f"{message_str}\n"
+
+        ticket_bytes = ticket_str.encode("utf-8")
+        ticket_file = discord.File(io.BytesIO(ticket_bytes), filename="ticket_log.txt")
+
+        ticket_embed = discord.Embed(
+            title="Ticket Closed",
+            timestamp=datetime.now(),
+            description=f"**Reason:** {" ".join(args)}"
+        )
+        ticket_embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar.url)
+        ticket_embed.set_footer(text=f"{ticket_details.user.name} | {ticket_details.user.id}", icon_url=ticket_details.user.display_avatar.url)
+
+        await self.ticket_log_channel.send(file=ticket_file, embed=ticket_embed)
+        await ticket_details.channel.delete(reason=f"Ticket closed by {ctx.author.name}")
 
         return None
 
@@ -188,11 +256,10 @@ class ContactStaff(commands.GroupCog):
         if not isinstance(channel, DMChannel): return None
 
         user = message.author
-        ticket_channel_matches = [x for x in self.ticket_channels if x.name == user.name]
-        if not ticket_channel_matches: return None
 
-        # two tickets can't have the same name, as per this code's logic
-        ticket_channel = ticket_channel_matches[0]
+        ticket_channel = self.get_ticket_channel(user)
+        if ticket_channel is None: return None
+
         await self.send_msg_received(message.content, message.author, ticket_channel)
         await self.send_msg_sent(message.content, message.author, user)
 
