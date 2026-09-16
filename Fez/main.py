@@ -30,8 +30,8 @@ from shared.utils.misc import shared_error
 class Fez(commands.Bot):
 
     bot_cogs = [
-        '.cogs.staff_commands',
-        '.cogs.report'
+        'cogs.staff_commands',
+        'cogs.report'
     ]
 
     async def setup_hook(self) -> None:
