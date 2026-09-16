@@ -28,7 +28,7 @@ from shared.utils.misc import shared_error
 class TransBot(commands.Bot):
 
     # Cogs to be added when db support is ready:
-    # '.cogs.ban'
+    # 'cogs.ban'
 
     bot_cogs: List[str] = [
 
