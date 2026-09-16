@@ -29,15 +29,19 @@ from shared.utils.misc import shared_error
 
 class Fez(commands.Bot):
 
-    bot_cogs = [
-        'cogs.staff_commands',
-        'cogs.report'
+    bot_extensions = [
+        'extensions.staff_commands',
+        'extensions.report',
+        'extensions.manage_extensions'
     ]
 
     async def setup_hook(self) -> None:
-        for cog in self.bot_cogs:
-            await self.load_extension(cog, package=__package__)
-            print(f"Loaded cog: {cog}")
+        for extension in self.bot_extensions:
+            try:
+                await self.load_extension(extension, package=__package__)
+                print(f"Loaded extension: {extension}")
+            except commands.ExtensionError as e:
+                print(f"Failed to load extension {extension}: {e}")
 
     async def on_ready(self) -> None:
         print(f'{self.user} has finished booting.')
