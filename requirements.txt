@@ -6,4 +6,4 @@ types-pytz==2026.3.1.20260727
 aiosqlite==0.22.1
 psycopg==3.3.5
 psycopg-pool==3.3.2
-sqlalchemy==2.0.52
+sqlalchemy==2.0.54
