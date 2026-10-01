@@ -11,4 +11,5 @@ updates:
       interval: "weekly"
     groups:
       dependencies:
-        patterns: "*" # groups dependency updates into a single PR
+        patterns: 
+          - "*" # groups dependency updates into a single PR
