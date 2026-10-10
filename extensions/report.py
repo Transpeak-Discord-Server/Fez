@@ -16,12 +16,12 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
 
     @classmethod
     async def ready(cls, bot: commands.Bot) -> None:
-        reports_channel = await bot.fetch_channel(config['ch_id']['reports'])
+        reports_channel = await bot.fetch_channel(config['ch_id']['#reports'])
         if not isinstance(reports_channel, ForumChannel):
             raise ValueError("reports channel is not a forum channel")
         cls.reports_channel = reports_channel
 
-        reports_over18_channel = await bot.fetch_channel(config['ch_id']['reports-over18'])
+        reports_over18_channel = await bot.fetch_channel(config['ch_id']['#reports-over18'])
         if not isinstance(reports_over18_channel, ForumChannel):
             raise ValueError("reports-over18 channel is not a forum channel")
         cls.reports_over18_channel = reports_over18_channel
