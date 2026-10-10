@@ -28,10 +28,11 @@ from shared.utils.misc import shared_error
 
 
 class Fez(commands.Bot):
-
+  
     bot_extensions = [
         'extensions.staff_commands',
         'extensions.report',
+        '.cogs.message_logging',
         'extensions.manage_extensions'
     ]
 
