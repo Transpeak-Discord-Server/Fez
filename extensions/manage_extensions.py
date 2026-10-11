@@ -1,69 +1,68 @@
+import discord
+from discord import app_commands
 from discord.ext import commands
 
-from shared.utils.permissions import permission_check, Level
-from typing import Any
+from shared.utils.permissions import Level, permission_check
 
 
-class ManageExtensions(commands.Cog):
+class ManageExtensions(app_commands.Group):
 
     def __init__(self, bot: commands.Bot):
+        super().__init__(name="extension")
         self.bot = bot
 
+    @app_commands.command()
     @permission_check(Level.ADMIN)
-    @commands.group(invoke_without_command=True)
-    async def extension(self, ctx: commands.Context[Any]) -> None:
-        await ctx.reply(f"For managing extensions.\n"
-                        f"Must be followed by one of: load, unload, reload, list")
-
-    @permission_check(Level.ADMIN)
-    @extension.command()  # type: ignore[attr-defined,untyped-decorator]
-    async def unload(self, ctx: commands.Context[Any], extension: str) -> None:
+    async def unload(self, interaction: discord.Interaction[commands.Bot], extension: str) -> None:
         try:
             await self.bot.unload_extension(extension)
-            await ctx.reply("Extension unloaded.")
+            await interaction.response.send_message("Extension unloaded.")
         except commands.ExtensionNotFound:
-            await ctx.reply("That is not a valid extension!")
+            await interaction.response.send_message("That is not a valid extension!")
         except commands.ExtensionNotLoaded:
-            await ctx.reply("That extension is not loaded.")
+            await interaction.response.send_message("That extension is not loaded.")
 
+    @app_commands.command()
     @permission_check(Level.ADMIN)
-    @extension.command()  # type: ignore[attr-defined,untyped-decorator]
-    async def load(self, ctx: commands.Context[Any], extension: str) -> None:
+    async def load(self, interaction: discord.Interaction[commands.Bot], extension: str) -> None:
         try:
             await self.bot.load_extension(extension)
-            await ctx.reply("Extension loaded.")
+            await interaction.response.send_message("Extension loaded.")
         except commands.ExtensionNotFound:
-            await ctx.reply("That is not a valid extension!")
+            await interaction.response.send_message("That is not a valid extension!")
         except commands.ExtensionAlreadyLoaded:
-            await ctx.reply("That extension is already loaded.")
+            await interaction.response.send_message("That extension is already loaded.")
         except commands.NoEntryPointError:
-            await ctx.reply("Could not find entry point in that extension.")
+            await interaction.response.send_message("Could not find entry point in that extension.")
         except commands.ExtensionFailed as e:
             print(e)
-            await ctx.reply("Extension failed to load.")
+            await interaction.response.send_message("Extension failed to load.")
 
-    async def reload(self, ctx: commands.Context[Any], extension: str) -> None:
+    @app_commands.command()
+    @permission_check(Level.ADMIN)
+    async def reload(self, interaction: discord.Interaction[commands.Bot], extension: str) -> None:
         try:
             await self.bot.reload_extension(extension)
-            await ctx.reply("Extension reloaded.")
+            await interaction.response.send_message("Extension reloaded.")
         except commands.ExtensionNotFound:
-            await ctx.reply("That is not a valid extension!")
+            await interaction.response.send_message("That is not a valid extension!")
         except commands.NoEntryPointError:
-            await ctx.reply("Could not find entry point in that extension.")
+            await interaction.response.send_message("Could not find entry point in that extension.")
         except commands.ExtensionFailed as e:
             print(e)
-            await ctx.reply("Extension failed to load.")
+            await interaction.response.send_message("Extension failed to load.")
         except commands.ExtensionNotLoaded:
-            await ctx.reply("That extension is not loaded.")
+            await interaction.response.send_message("That extension is not loaded.")
 
+    @app_commands.command()
     @permission_check(Level.ADMIN)
-    @extension.command()  # type: ignore[attr-defined,untyped-decorator]
-    async def list(self, ctx: commands.Context[Any]) -> None:
+    async def list(self, interaction: discord.Interaction[commands.Bot]) -> None:
         loaded_extensions = "\n".join(
             [x for x in self.bot.extensions]
         )
-        await ctx.reply(f"Currently loaded extensions:\n"
-                        f"{loaded_extensions}")
+        await interaction.response.send_message(f"Currently loaded extensions:\n"
+                                                f"{loaded_extensions}")
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(ManageExtensions(bot))
+    bot.tree.add_command(ManageExtensions(bot))
+    await bot.tree.sync()

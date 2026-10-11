@@ -14,74 +14,72 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any
-
 import discord
 import os
 import pytz
+from discord import app_commands
 from discord.ext import commands
 from datetime import datetime
 from random import randint, choice, sample
 from pathlib import Path
 
-from discord.ext.commands import Context
-
 from shared.config import Config
 
-PROJECT_PATH = Path(os.path.dirname(__file__)).parent.parent
+PROJECT_PATH = Path(os.path.dirname(__file__)).parent
 
-class StaffCommands(commands.Cog):
+@app_commands.guild_only()
+class StaffCommands(app_commands.Group):
 
     def __init__(self, bot: commands.Bot) -> None:
+        super().__init__(name="staff")
         self.bot = bot
-
-    def cog_check(self, ctx: Context[Any]) -> bool:
-        return ctx.guild is not None
 
     # Aven
     AVEN_USER_ID = 275263004961144833
     AVEN_SLEEP_WINDOW = (2, 8)
 
-    @commands.group(invoke_without_command=True)
-    async def aven(self, ctx: commands.Context[Any]) -> None:
-        await ctx.reply(f"<@{self.AVEN_USER_ID}>, boop!")
-        return None
-
-    @aven.command(name='time') # type: ignore
-    async def aven_time(self, ctx: commands.Context[Any]) -> None:
+    async def aven_time(self, interaction: discord.Interaction[commands.Bot]) -> None:
         time_uk = datetime.now(pytz.timezone('Europe/London'))
         time_uk_str = time_uk.strftime('%H:%M:%S')
         start, end = self.AVEN_SLEEP_WINDOW
         if end >= time_uk.hour >= start:
-            await ctx.reply(f"The time for Aven is {time_uk_str}. She's probably asleep!")
+            await interaction.response.send_message(f"The time for Aven is {time_uk_str}. She's probably asleep!")
             return None
-        await ctx.reply(f"The time for Aven is {time_uk_str}")
+        await interaction.response.send_message(f"The time for Aven is {time_uk_str}")
+        return None
+
+    @app_commands.command()
+    async def aven(self, interaction: discord.Interaction[commands.Bot], time: bool | None) -> None:
+        if time:
+            await self.aven_time(interaction)
+            return None
+        await interaction.response.send_message(f"<@{self.AVEN_USER_ID}>, boop!")
         return None
 
 
     # Ash
     ASH_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/ash_staff_command.gif')
 
-    @commands.command()
-    async def ash(self, ctx: commands.Context[Any]) -> None:
+    @app_commands.command()
+    async def ash(self, interaction: discord.Interaction[commands.Bot]) -> None:
         with open(self.ASH_IMAGE_PATH, 'rb') as f:
-            await ctx.reply(file=discord.File(f, self.ASH_IMAGE_PATH))
+            await interaction.response.send_message(file=discord.File(f, self.ASH_IMAGE_PATH))
         return None
 
     # Zoey
     ZOEY_DATA = Config.json_config['ZOEY_DATA']
 
-    @commands.command()
-    async def zoey(self, ctx: commands.Context[Any], member_str: str | None = None) -> None:
+    @app_commands.command()
+    async def zoey(self, interaction: discord.Interaction[commands.Bot], member_str: str | None = None) -> None:
         member_int = int(member_str) if member_str and member_str.isdigit() else None
 
-        server = ctx.guild
+        server = interaction.guild
         if not server: return None
 
         member = server.get_member(member_int) if member_int else None
         chosen_obj_1, chosen_obj_2 = sample(self.ZOEY_DATA['ZOEY_OBJECTS'], 2)
 
-        await ctx.reply(f"Hello{" " + member.display_name if member else ""}, this is Fez from Transpeak's "
+        await interaction.response.send_message(f"Hello{" " + member.display_name if member else ""}, this is Fez from Transpeak's "
            f"{choice(self.ZOEY_DATA['ZOEY_JOB_TITLES'])}. I'm here to inform you that we have decided to banish "
            f"you to {choice(self.ZOEY_DATA['ZOEY_LOCATIONS'])}. {choice(self.ZOEY_DATA['ZOEY_REACTION'])} you have a chance at "
            f"redemption by finding {choice(self.ZOEY_DATA['ZOEY_STRUCTURES'])} and collecting "
@@ -93,63 +91,63 @@ class StaffCommands(commands.Cog):
     # Cat
     CAT_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/night.gif')
 
-    @commands.command()
-    async def cat(self, ctx: commands.Context[Any]) -> None:
+    @app_commands.command()
+    async def cat(self, interaction: discord.Interaction[commands.Bot]) -> None:
         with open(self.CAT_IMAGE_PATH, 'rb') as f:
-            await ctx.reply(file=discord.File(f, 'night_staff_command.gif'))
+            await interaction.response.send_message(file=discord.File(f, 'night_staff_command.gif'))
         return None
 
     # Luna
     LUNA_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/luna_staff_command.png')
 
-    @commands.command()
-    async def luna(self, ctx: commands.Context[Any]) -> None:
+    @app_commands.command()
+    async def luna(self, interaction: discord.Interaction[commands.Bot]) -> None:
         with open(self.LUNA_IMAGE_PATH, 'rb') as f:
-            await ctx.reply(file=discord.File(f, 'luna_staff_command.png'))
+            await interaction.response.send_message(file=discord.File(f, 'luna_staff_command.png'))
         return None
 
     # Simon
     SIMON_USER_ID = 1383285080700747837
 
-    @commands.command()
-    async def simon(self, ctx: commands.Context[Any]) -> None:
-        await ctx.reply(f"<@{self.SIMON_USER_ID}> awoo!")
+    @app_commands.command()
+    async def simon(self, interaction: discord.Interaction[commands.Bot]) -> None:
+        await interaction.response.send_message(f"<@{self.SIMON_USER_ID}> awoo!")
         return None
 
     # Ren
-    @commands.command()
-    async def ren(self, ctx: commands.Context[Any]) -> None:
-        await ctx.reply("yo")
+    @app_commands.command()
+    async def ren(self, interaction: discord.Interaction[commands.Bot]) -> None:
+        await interaction.response.send_message("yo")
         return None
 
     # Crymson
     CRYMSON_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/frank-iero-six-seven.gif')
 
-    @commands.command()
-    async def crymson(self, ctx: commands.Context[Any]) -> None:
+    @app_commands.command()
+    async def crymson(self, interaction: discord.Interaction[commands.Bot]) -> None:
         with open(self.CRYMSON_IMAGE_PATH, 'rb') as f:
-            await ctx.reply(file=discord.File(f, 'crymson_staff_command.gif'))
+            await interaction.response.send_message(file=discord.File(f, 'crymson_staff_command.gif'))
         return None
 
     # Katelyn
     KATELYN_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/katelyn.gif')
 
-    @commands.command()
-    async def katelyn(self, ctx: commands.Context[Any]) -> None:
+    @app_commands.command()
+    async def katelyn(self, interaction: discord.Interaction[commands.Bot]) -> None:
         with open(self.KATELYN_IMAGE_PATH, 'rb') as f:
-            await ctx.reply(file=discord.File(f, 'katelyn_staff_command.gif'))
+            await interaction.response.send_message(file=discord.File(f, 'katelyn_staff_command.gif'))
         return None
 
     # Icarus
     ICARUS_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/icarus.gif')
 
-    @commands.command()
-    async def icarus(self, ctx: commands.Context[Any]) -> None:
+    @app_commands.command()
+    async def icarus(self, interaction: discord.Interaction[commands.Bot]) -> None:
         with open(self.ICARUS_IMAGE_PATH, 'rb') as f:
-            await ctx.reply(file=discord.File(f, 'icarus_staff_command.gif'))
+            await interaction.response.send_message(file=discord.File(f, 'icarus_staff_command.gif'))
         return None
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(StaffCommands(bot))
-    return None
+    bot.tree.add_command(StaffCommands(bot))
+    await bot.tree.sync()
