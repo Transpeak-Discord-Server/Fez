@@ -17,7 +17,7 @@
 from typing import Any, Callable
 
 import discord
-from discord import Member
+from discord import Member, app_commands
 from discord.ext import commands
 import os
 
@@ -79,12 +79,12 @@ def has_permission(member: Member, permission_level: Level) -> bool:
     return not user_roles.isdisjoint(staff_roles)
 
 def permission_check(permission_level: Level) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    async def predicate(ctx: commands.Context[Any]) -> bool:
-        member = ctx.author
-        if isinstance(member, discord.User) and ctx.guild is None:
-            member = await misc.get_member_if_exists(ctx.bot.get_guild(bot_config['server_id']), ctx.author.id)
+    async def predicate(interaction: discord.Interaction[Any]) -> bool:
+        member = interaction.user
+        if isinstance(member, discord.User) and interaction.guild is None:
+            member = await misc.get_member_if_exists(interaction.client.get_guild(bot_config['server_id']), member.id)
         if isinstance(member, discord.Member) and has_permission(member, permission_level):
             return True
         raise UserPermissionsError(permission_level)
 
-    return commands.check(predicate)
+    return app_commands.check(predicate)

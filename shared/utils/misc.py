@@ -19,7 +19,7 @@ from datetime import datetime
 from typing import Iterable, Protocol, Any
 
 import discord
-from discord import Member, User
+from discord import Member, User, app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -79,8 +79,10 @@ async def shared_error(ctx: commands.Context[Any], error: Exception):
     print(error)
     return None
 
-async def require_server(ctx: Context[Any]) -> discord.Guild | None:
-    if ctx.guild is None:
-        await ctx.reply("This command can only be used within Transpeak.")
+async def require_server(interaction: discord.Interaction[Any]) -> discord.Guild | None:
+    if interaction.guild is None:
+        await interaction.response.send_message("This command can only be used within Transpeak.")
         return None
-    return ctx.guild
+    return interaction.guild
+
+# Extensions
