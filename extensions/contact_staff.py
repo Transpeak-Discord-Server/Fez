@@ -180,7 +180,7 @@ class ContactStaff(commands.GroupCog):
         return TicketMessageDetails(server, channel, user, staff_member, message)
 
     async def get_ticket_channel(self, user: discord.User | discord.Member) -> discord.TextChannel | None:
-        if not self.ticket_channels: await self.load_ticket_channels()
+        await self.load_ticket_channels()
         for channel in self.ticket_channels:
 
             topic = channel.topic
