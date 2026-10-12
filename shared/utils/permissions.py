@@ -18,7 +18,6 @@ from typing import Any, Callable
 
 import discord
 from discord import Member, app_commands
-from discord.ext import commands
 import os
 
 from shared.utils import misc
@@ -67,7 +66,7 @@ class PermissionManager:
         return cls._MAPPING.get(level, [])
 
 
-class UserPermissionsError(commands.CheckFailure):
+class UserPermissionsError(app_commands.CheckFailure):
     def __init__(self, required_perms: Level):
         self.required_perms = required_perms
         super().__init__(f"User tried to use a command for {required_perms.name}")

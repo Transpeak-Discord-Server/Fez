@@ -7,7 +7,6 @@ from typing import Any
 import discord
 from discord import TextChannel, app_commands, DMChannel, Guild, Role, CategoryChannel
 from discord.ext import commands
-from discord.ext.commands import Context
 
 from shared.config import Config
 from shared.utils.misc import get_member_or_user
@@ -36,6 +35,8 @@ class ContactStaff(commands.GroupCog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        if self.app_command is not None:
+            self.app_command.name = "modmail"
 
     async def cog_load(self) -> None:
         server = await self.bot.fetch_guild(config['server_id'])
@@ -94,14 +95,14 @@ class ContactStaff(commands.GroupCog):
 
         return await get_member_or_user(server, self.bot, user_id)
 
-    @app_commands.command()
+    @app_commands.command(name="open-ticket", description="Open a Modmail ticket with staff.")
     @app_commands.describe(message="Your initial message to staff")
     async def contact_staff(self, interaction: discord.Interaction[Any], message: str) -> None:
 
         ticket_name = interaction.user.name
-        if any(x.name == ticket_name for x in self.ticket_channels):
+        if await self.get_ticket_channel(interaction.user) is not None:
             await interaction.response.send_message(
-                "You already have a ticket open with staff. Please message me in DMs to contact staff!")
+                "You already have a ticket open with staff. Please message me in DMs to contact staff!", ephemeral=True)
             return None
 
         channel = await self.server.create_text_channel(name=ticket_name, category=self.ticket_category,
@@ -120,7 +121,15 @@ class ContactStaff(commands.GroupCog):
                              icon_url=interaction.user.display_avatar.url)
         await channel.send(self.staff_alert_role.mention, embed=msg_embed)
 
-        await interaction.response.send_message("Ticket opened. Staff will be with you shortly!")
+        msg_sent_embed = discord.Embed(
+            title="Message Sent",
+            description=message,
+            colour=discord.Colour.orange()
+        )
+        msg_sent_embed.set_author(name=interaction.user.name, icon_url=interaction.user.display_avatar.url)
+
+        await interaction.user.send("You have opened a ticket, staff will be with you shortly in this DM channel!", embed=msg_sent_embed)
+        await interaction.response.send_message("Ticket opened, check your DMs!", ephemeral=True)
         return None
 
     @staticmethod
@@ -136,22 +145,27 @@ class ContactStaff(commands.GroupCog):
 
     @staticmethod
     async def send_msg_sent(message: str, author: discord.User | discord.Member,
-                            send_in: discord.abc.Messageable) -> None:
+                            send_in: discord.abc.Messageable | discord.Interaction[commands.Bot]) -> None:
         msg_embed = discord.Embed(
             title="Message Sent",
             description=message,
             colour=discord.Colour.orange()
         )
         msg_embed.set_author(name=author.name, icon_url=author.display_avatar.url)
+
+        if isinstance(send_in, discord.Interaction):
+            await send_in.response.send_message(embed=msg_embed)
+            return
+
         await send_in.send(embed=msg_embed)
 
-    async def get_msg_details(self, ctx: commands.Context[Any], args: tuple[str, ...]) -> TicketMessageDetails | None:
-        server = ctx.guild
+    async def get_msg_details(self, interaction: discord.Interaction[commands.Bot], message: str) -> TicketMessageDetails | None:
+        server = interaction.guild
         if server is None:
-            await ctx.reply("This command can only be used within Transpeak!")
+            await interaction.response.send_message("This command can only be used within Transpeak!")
             return None
 
-        channel = ctx.channel
+        channel = interaction.channel
         if not isinstance(channel, TextChannel): return None
 
         category = channel.category
@@ -159,11 +173,10 @@ class ContactStaff(commands.GroupCog):
 
         user = await self.get_user(server, channel)
         if user is None:
-            await ctx.reply("User not found.")
+            await interaction.response.send_message("User not found.")
             return None
 
-        staff_member = ctx.author
-        message = " ".join(args)
+        staff_member = interaction.user
         return TicketMessageDetails(server, channel, user, staff_member, message)
 
     async def get_ticket_channel(self, user: discord.User | discord.Member) -> discord.TextChannel | None:
@@ -171,44 +184,42 @@ class ContactStaff(commands.GroupCog):
         for channel in self.ticket_channels:
 
             topic = channel.topic
-            print(f"topic: {topic}")
             if topic is None: continue
 
             topic_split = topic.split(" ")
-            print(f"topic split: {topic_split}")
             if len(topic_split) < 3: continue
 
             channel_user_id = topic_split[2]
-            print(f"channel user id: {channel_user_id}")
             if not channel_user_id.isdigit(): continue
-            print (f"user id: {user.id}, channel user id: {int(channel_user_id)}")
             if user.id == int(channel_user_id): return channel
         return None
 
-    @commands.command()
+    @app_commands.command(description="Reply to the user in a Modmail ticket")
     @permission_check(Level.STAFF)
-    async def reply(self, ctx: commands.Context[Any], *args: str) -> None:
+    async def reply(self, interaction: discord.Interaction[commands.Bot], message: str) -> None:
 
-        ticket_details = await self.get_msg_details(ctx, args)
-        if not ticket_details: return None
+        ticket_details = await self.get_msg_details(interaction, message)
+        if not ticket_details:
+            await interaction.response.send_message("Couldn't get ticket details.")
+            return None
 
         try:
             await self.send_msg_received(ticket_details.message, ticket_details.staff_member, ticket_details.user)
         except discord.Forbidden:
-            await ctx.reply("User cannot be messaged.")
+            await interaction.response.send_message("User cannot be messaged.")
             return None
         except discord.NotFound:
-            await ctx.reply("User not found.")
+            await interaction.response.send_message("User not found.")
             return None
         except Exception as e:
-            await ctx.reply(f"Error sending message: {e}")
+            await interaction.response.send_message(f"Error sending message: {e}")
 
-        await self.send_msg_sent(ticket_details.message, ticket_details.staff_member, ctx.channel)
+        await self.send_msg_sent(ticket_details.message, ticket_details.staff_member, interaction)
 
         return None
 
     @staticmethod
-    async def msg_to_string(ctx: Context[Any], message: discord.Message) -> str | None:
+    async def msg_to_string(message: discord.Message) -> str | None:
         message_author = f"{message.author.name} ({message.author.id})"
 
         embed_str: str | None = None
@@ -218,8 +229,8 @@ class ContactStaff(commands.GroupCog):
             embed_str = embed.description
 
         reply = ""
-        if message.reference is not None and message.reference.message_id is not None:
-            reply_message = await ctx.fetch_message(message.reference.message_id)
+        if message.reference is not None and isinstance(message.reference.resolved, discord.Message):
+            reply_message = message.reference.resolved
             reply_message_user = reply_message.author.name
             shortened_reply_message = textwrap.shorten(reply_message.content, 10, placeholder="...")
             reply = f" (In reply to @{reply_message_user}: \"{shortened_reply_message}\")"
@@ -228,19 +239,21 @@ class ContactStaff(commands.GroupCog):
 
         return f"{message_author}{reply}: {message_content}"
 
-    @commands.command()
+    @app_commands.command(description="Close the ticket you are in")
     @permission_check(Level.STAFF)
-    async def close(self, ctx: commands.Context[Any], *args: str) -> None:
+    async def close(self, interaction: discord.Interaction[commands.Bot], reason: str) -> None:
 
-        ticket_details = await self.get_msg_details(ctx, args)
-        if not ticket_details: return None
+        ticket_details = await self.get_msg_details(interaction, reason)
+        if not ticket_details:
+            await interaction.response.send_message("Couldn't get ticket details.")
+            return None
 
-        await ctx.reply("Closing ticket...")
+        await interaction.response.send_message("Closing ticket...")
 
         ticket_messages = ticket_details.channel.history(oldest_first=True)
         ticket_str = ""
-        async for message in ticket_messages:
-            message_str = await self.msg_to_string(ctx, message)
+        async for ticket_message in ticket_messages:
+            message_str = await self.msg_to_string(ticket_message)
             if message_str is not None: ticket_str += f"{message_str}\n"
 
         ticket_bytes = ticket_str.encode("utf-8")
@@ -249,13 +262,13 @@ class ContactStaff(commands.GroupCog):
         ticket_embed = discord.Embed(
             title="Ticket Closed",
             timestamp=datetime.now(),
-            description=f"**Reason:** {" ".join(args)}"
+            description=f"**Reason:** {reason}"
         )
-        ticket_embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar.url)
+        ticket_embed.set_author(name=interaction.user.name, icon_url=interaction.user.display_avatar.url)
         ticket_embed.set_footer(text=f"{ticket_details.user.name} | {ticket_details.user.id}", icon_url=ticket_details.user.display_avatar.url)
 
         await self.ticket_log_channel.send(file=ticket_file, embed=ticket_embed)
-        await ticket_details.channel.delete(reason=f"Ticket closed by {ctx.author.name}")
+        await ticket_details.channel.delete(reason=f"Ticket closed by {interaction.user.name}")
 
         return None
 

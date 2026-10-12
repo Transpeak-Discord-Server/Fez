@@ -19,13 +19,17 @@ from typing import Any
 import discord
 import os
 from pathlib import Path
+
+from discord import app_commands, Interaction
+from discord.app_commands import AppCommandError
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from shared.utils.misc import shared_error
+from shared.utils.misc import shared_error, tree_error
 
-
-
+class FezTree(app_commands.CommandTree):
+    async def on_error(self, interaction: Interaction[Any], error: AppCommandError, /) -> None:
+        await tree_error(interaction, error)
 
 class Fez(commands.Bot):
 
@@ -33,7 +37,7 @@ class Fez(commands.Bot):
         'extensions.staff_commands',
         'extensions.report',
         'extensions.manage_extensions',
-        '.cogs.contact_staff'
+        'extensions.contact_staff',
     ]
 
     async def setup_hook(self) -> None:
@@ -43,6 +47,7 @@ class Fez(commands.Bot):
                 print(f"Loaded extension: {extension}")
             except commands.ExtensionError as e:
                 print(f"Failed to load extension {extension}: {e}")
+
 
     async def on_ready(self) -> None:
         print(f'{self.user} has finished booting.')
@@ -66,7 +71,7 @@ class Main:
 
         discord.utils.setup_logging()
 
-        client = Fez(intents=intents, command_prefix='!')
+        client = Fez(intents=intents, command_prefix='!', tree_cls=FezTree)
         client.run(token)
 
 if __name__ == "__main__":

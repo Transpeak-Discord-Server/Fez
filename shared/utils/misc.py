@@ -19,9 +19,8 @@ from datetime import datetime
 from typing import Iterable, Protocol, Any
 
 import discord
-from discord import Member, User, app_commands
+from discord import Member, User
 from discord.ext import commands
-from discord.ext.commands import Context
 
 from shared.utils.permissions import UserPermissionsError, Level
 
@@ -67,15 +66,27 @@ def _(time: datetime, time_format: str = "t") -> str:
 
 # Handle error
 
-async def shared_error(ctx: commands.Context[Any], error: Exception):
+async def permission_error(context: commands.Context[Any] | discord.Interaction[Any], error: UserPermissionsError) -> None:
+    if error.required_perms == Level.REGISTERED:
+        msg = "You need to be registered to do that! Please ping a staff member for help."
+    else:
+        msg = f"You need to be a {error.required_perms} to do that!"
+
+    if isinstance(context, discord.Interaction):
+        await context.response.send_message(msg)
+        return
+    await context.reply(msg)
+
+
+async def tree_error(interaction: discord.Interaction[Any], error: Exception) -> None:
+    if isinstance(error, UserPermissionsError):
+        await permission_error(interaction, error)
+
+async def shared_error(ctx: commands.Context[Any], error: Exception) -> None:
     if isinstance(error, commands.CommandNotFound):
         return None
     if isinstance(error, UserPermissionsError):
-        if error.required_perms == Level.REGISTERED:
-            await ctx.reply("You need to be registered to do that! Please ping a staff member for help.")
-            return None
-        await ctx.reply(f"You need to be a {error.required_perms} to do that!")
-        return None
+        await permission_error(ctx, error)
     print(error)
     return None
 
