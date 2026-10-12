@@ -117,7 +117,7 @@ class ContactStaff(commands.GroupCog):
             description=message,
             colour=discord.Colour.green()
         )
-        msg_embed.set_author(name=f"{interaction.user.name} | {interaction.user.id}",
+        msg_embed.set_author(name=f"{interaction.user.name} ({interaction.user.id})",
                              icon_url=interaction.user.display_avatar.url)
         await channel.send(self.staff_alert_role.mention, embed=msg_embed)
 
@@ -140,7 +140,7 @@ class ContactStaff(commands.GroupCog):
             description=message,
             colour=discord.Colour.green()
         )
-        msg_embed.set_author(name=author.name, icon_url=author.display_avatar.url)
+        msg_embed.set_author(name=f"{author.name} ({author.id})", icon_url=author.display_avatar.url)
         await send_in.send(embed=msg_embed)
 
     @staticmethod
@@ -151,7 +151,7 @@ class ContactStaff(commands.GroupCog):
             description=message,
             colour=discord.Colour.orange()
         )
-        msg_embed.set_author(name=author.name, icon_url=author.display_avatar.url)
+        msg_embed.set_author(name=f"{author.name} ({author.id})", icon_url=author.display_avatar.url)
 
         if isinstance(send_in, discord.Interaction):
             await send_in.response.send_message(embed=msg_embed)
@@ -220,13 +220,10 @@ class ContactStaff(commands.GroupCog):
 
     @staticmethod
     async def msg_to_string(message: discord.Message) -> str | None:
-        message_author = f"{message.author.name} ({message.author.id})"
 
-        embed_str: str | None = None
+        embed: discord.Embed | None = None
         if len(message.embeds) != 0:
             embed = message.embeds[0]
-            if embed.title == "Message sent": return None
-            embed_str = embed.description
 
         reply = ""
         if message.reference is not None and isinstance(message.reference.resolved, discord.Message):
@@ -235,7 +232,8 @@ class ContactStaff(commands.GroupCog):
             shortened_reply_message = textwrap.shorten(reply_message.content, 10, placeholder="...")
             reply = f" (In reply to @{reply_message_user}: \"{shortened_reply_message}\")"
 
-        message_content = message.content if not embed_str else f"Message received - {embed_str}"
+        message_content = message.content if not embed else f"{embed.title} - {embed.description}"
+        message_author = f"{message.author.name} ({message.author.id})" if not embed else f"{message.author.name} ({message.author.id}), on behalf of {embed.author.name}"
 
         return f"{message_author}{reply}: {message_content}"
 
