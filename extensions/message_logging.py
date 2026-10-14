@@ -51,25 +51,25 @@ class MessageLogging(commands.Cog):
         self.bot = bot
 
     async def cog_load(self) -> None:
-        united_sfw = await self.bot.fetch_channel(self.UNIFIED_SFW_ID)
-        if not isinstance(united_sfw, TextChannel):
-            raise ConfigError("United SFW channel not found")
-        self.unified_sfw = united_sfw
+        unified_sfw = await self.bot.fetch_channel(self.UNIFIED_SFW_ID)
+        if not isinstance(unified_sfw, TextChannel):
+            raise ConfigError("Unified SFW channel not found")
+        self.unified_sfw = unified_sfw
 
-        united_nsfw = await self.bot.fetch_channel(self.UNIFIED_NSFW_ID)
-        if not isinstance(united_nsfw, TextChannel):
-            raise ConfigError("United NSFW channel not found")
-        self.unified_nsfw = united_nsfw
+        unified_nsfw = await self.bot.fetch_channel(self.UNIFIED_NSFW_ID)
+        if not isinstance(unified_nsfw, TextChannel):
+            raise ConfigError("Unified NSFW channel not found")
+        self.unified_nsfw = unified_nsfw
 
         bot_dms = await self.bot.fetch_channel(self.BOT_DMS_ID)
         if not isinstance(bot_dms, TextChannel):
             raise ConfigError("#bot-dms channel not found")
         self.bot_dms = bot_dms
 
-        staff_united = await self.bot.fetch_channel(self.STAFF_UNIFIED_ID)
-        if not isinstance(staff_united, TextChannel):
-            raise ConfigError("Staff United not found")
-        self.staff_unified = staff_united
+        staff_unified = await self.bot.fetch_channel(self.STAFF_UNIFIED_ID)
+        if not isinstance(staff_unified, TextChannel):
+            raise ConfigError("Staff Unified not found")
+        self.staff_unified = staff_unified
 
     def log_message_in(self, channel: discord.abc.Messageable) -> discord.TextChannel | None:
         if isinstance(channel, DMChannel | GroupChannel):
