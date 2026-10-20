@@ -78,4 +78,19 @@ class InfoMessages(app_commands.Group):
     @permission_check(Level.LEAD)
     async def refresh_messages(self, interaction: discord.Interaction[commands.Bot]) -> None:
 
-        await interaction.response.send_message("")
+        await interaction.response.send_message("Refreshing messages...")
+
+        message_groups: list[MessageGroup] = []
+
+        for file in self.loaded_files:
+            try:
+                message_groups.extend(self.load_messages_file(file))
+            except Exception as e:
+                await interaction.followup.send(f"Error loading messages: {e}")
+
+        for group in message_groups:
+            await group.channel.purge(limit=100)
+            for message in group.messages:
+                await group.channel.send(message)
+
+        await interaction.followup.send("Messages refreshed!")
