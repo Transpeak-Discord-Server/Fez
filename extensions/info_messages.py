@@ -107,7 +107,7 @@ class InfoMessages(app_commands.Group):
             message_group = self.load_messages_file(file_location)
         except ValueError as e:
             print(e)
-            await interaction.response.send_message(e)
+            await interaction.followup.send(str(e))
             return
 
         await self.send_messages(message_group)
