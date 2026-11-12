@@ -13,7 +13,7 @@ from shared.utils.permissions import permission_check, Level
 from shared.config import Config
 
 project_path = Path(os.path.dirname(__file__)).parent
-messages_path = project_path / "shared" / "messages"
+messages_path = project_path / "shared" / "messages" / "set_messages"
 default_file_name = messages_path / "default.json"
 
 
