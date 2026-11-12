@@ -41,6 +41,7 @@ class TransBot(commands.Bot):
                 print(f"Loaded extension: {extension}")
             except commands.ExtensionError as e:
                 print(f"Failed to load extension {extension}: {e}")
+        await self.tree.sync()
 
     async def on_ready(self) -> None:
         print(f'{self.user} has finished booting.')

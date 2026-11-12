@@ -150,4 +150,3 @@ class StaffCommands(app_commands.Group):
 
 async def setup(bot: commands.Bot) -> None:
     bot.tree.add_command(StaffCommands(bot))
-    await bot.tree.sync()

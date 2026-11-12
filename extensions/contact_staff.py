@@ -65,8 +65,6 @@ class ContactStaff(commands.GroupCog):
 
         self.ticket_channels = []
 
-        await self.bot.tree.sync()
-
     async def load_ticket_channels(self) -> None:
         server = self.bot.get_guild(config['server_id'])
         if server is None:
