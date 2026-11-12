@@ -4,6 +4,6 @@ pytz==2026.6
 mypy==2.4.1
 types-pytz==2026.6.0.20261031
 aiosqlite==0.22.1
-psycopg==3.3.6
+psycopg==3.3.8
 psycopg-pool==3.3.3
-sqlalchemy==2.1.6
+sqlalchemy==2.1.8
