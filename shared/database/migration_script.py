@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, JSON, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -55,7 +55,7 @@ class Warn(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('user.id'))
     reason: Mapped[str] = mapped_column(String)
     issuer_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('user.id'))
-    warn_timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    warn_timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(tz=timezone.utc))
     warn_type: Mapped[str] = mapped_column(String)
 
 class Ban(Base):
@@ -64,7 +64,7 @@ class Ban(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('user.id'))
     reason: Mapped[str] = mapped_column(String)
     issuer_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('user.id'))
-    ban_timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    ban_timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(tz=timezone.utc))
     ban_type: Mapped[str] = mapped_column(String)
 
 class OptinBan(Base):
@@ -124,7 +124,7 @@ class CommandLog(Base):
     __tablename__ = 'command_log'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('user.id'))
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(tz=timezone.utc))
     command: Mapped[str] = mapped_column(String)
     args: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
@@ -133,4 +133,4 @@ class RegistrationStatusLog(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     status: Mapped[bool] = mapped_column(Boolean)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('user.id'))
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(tz=timezone.utc))
