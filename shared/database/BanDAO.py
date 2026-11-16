@@ -15,13 +15,13 @@ class BanDAO:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add_ban(self, user_id: int, reason: str, issuer_id: int, ban_type: BanType, timestamp: datetime | None = None) -> int:
+    async def add_ban(self, user_id: int, reason: str, issuer_id: int, ban_type: BanType, timestamp: datetime | None = None) -> data.Ban:
         if timestamp is None:
             timestamp = datetime.now(tz=timezone.utc)
         ban_statement = insert(Ban).returning(Ban).values(user_id=user_id, reason=reason, issuer_id=issuer_id, ban_timestamp=timestamp, ban_type=ban_type.value)
         ban = (await self.session.execute(ban_statement)).scalar_one()
         await self.session.commit()
-        return ban.ban_id
+        return data.Ban(ban.ban_id, user_id, issuer_id, reason, timestamp, ban_type)
 
     async def edit_ban(self, ban_id: int, *, reason: str | None = None, ban_type: BanType | None = None, timestamp: datetime | None = None) -> data.Ban:
         values: dict[str, Any] = {}
