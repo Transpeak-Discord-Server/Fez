@@ -1,26 +1,31 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Optional
+
 
 @dataclass
-class UserData:
-
+class User:
     id: int
     message_count: int
-    roles: list[int] = field(default_factory=list)
-    bans: list[BanData] = field(default_factory=list)
-    weekly_messages: list[UserMessagesWeekData] = field(default_factory=list)
+    under_18: bool
+    reg_banned: bool
+    bio: Optional[str]
+    last_seen: Optional[datetime]
+    last_message: Optional[str]
+
+
+class BanType(Enum):
+    Permanent = "permanent"
+    Temporary = "temporary"
+    VC = "vc"
+    VCSoft = "vc_soft"
 
 @dataclass
-class BanData:
-
-    user: int
-    banner: int
-    timestamp: int
+class Ban:
+    ban_id: int
+    user_id: int
+    issuer_id: int
     reason: str
-    links: list[str]
-
-@dataclass
-class UserMessagesWeekData:
-
-    user: int
-    messages: int
-    week: int
+    timestamp: datetime
+    ban_type: BanType
