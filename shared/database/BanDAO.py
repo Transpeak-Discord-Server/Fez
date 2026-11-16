@@ -15,7 +15,9 @@ class BanDAO:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add_ban(self, user_id: int, reason: str, issuer_id: int, ban_type: BanType, timestamp: datetime = datetime.now(tz=timezone.utc)) -> int:
+    async def add_ban(self, user_id: int, reason: str, issuer_id: int, ban_type: BanType, timestamp: datetime | None = None) -> int:
+        if timestamp is None:
+            timestamp = datetime.now(tz=timezone.utc)
         ban_statement = insert(Ban).returning(Ban).values(user_id=user_id, reason=reason, issuer_id=issuer_id, ban_timestamp=timestamp, ban_type=ban_type.value)
         ban = (await self.session.execute(ban_statement)).scalar_one()
         await self.session.commit()
@@ -39,10 +41,11 @@ class BanDAO:
         await self.session.commit()
         return data.Ban(ban.ban_id, ban.user_id, ban.issuer_id, ban.reason, ban.ban_timestamp, BanType(ban.ban_type))
 
-    async def get_ban(self, ban_id: int) -> Ban | None:
+    async def get_ban(self, ban_id: int) -> data.Ban | None:
         ban_select_statement = select(Ban).where(Ban.ban_id == ban_id)
         ban = (await self.session.execute(ban_select_statement)).scalar()
-        return ban
+        if ban is None: return None
+        return data.Ban(ban.ban_id, ban.user_id, ban.issuer_id, ban.reason, ban.ban_timestamp, BanType(ban.ban_type))
 
     async def get_bans(self, user_id: int) -> list[data.Ban]:
         ban_select_statement = select(Ban).where(Ban.user_id == user_id)
