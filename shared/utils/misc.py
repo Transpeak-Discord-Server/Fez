@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+import traceback
 from functools import singledispatch
 from datetime import datetime
 from typing import Iterable, Protocol, Any
@@ -81,13 +81,14 @@ async def permission_error(context: commands.Context[Any] | discord.Interaction[
 async def tree_error(interaction: discord.Interaction[Any], error: Exception) -> None:
     if isinstance(error, UserPermissionsError):
         await permission_error(interaction, error)
+    traceback.print_exception(type(error), error, error.__traceback__)
 
 async def shared_error(ctx: commands.Context[Any], error: Exception) -> None:
     if isinstance(error, commands.CommandNotFound):
         return None
     if isinstance(error, UserPermissionsError):
         await permission_error(ctx, error)
-    print(error)
+    traceback.print_exception(type(error), error, error.__traceback__)
     return None
 
 async def require_server(interaction: discord.Interaction[Any]) -> discord.Guild | None:
@@ -96,4 +97,39 @@ async def require_server(interaction: discord.Interaction[Any]) -> discord.Guild
         return None
     return interaction.guild
 
-# Extensions
+# messages
+
+async def send_split_message(where: discord.abc.Messageable, message: str, *,
+                             max_msg_len: int = 2000, message_delims: tuple[str, ...] = ('\n', ' ')) -> list[discord.Message]:
+
+    msg_pos = 0
+    end = len(message)
+
+    messages: list[discord.Message] = []
+
+    while msg_pos < end:
+
+        limit = -1
+        max_char = msg_pos + (max_msg_len-1)
+
+        if end <= max_char:
+            messages.append(await where.send(message[msg_pos:]))
+            return messages
+
+        for delim in message_delims:
+            if limit == -1:
+                limit = message.rfind(delim, msg_pos, max_char)
+
+        if limit == -1:
+            limit = min(len(message), max_char)
+
+        if limit == msg_pos:
+            msg_pos += 1
+            continue
+
+        messages.append(await where.send(message[msg_pos:limit]))
+
+
+        msg_pos = limit + 1 if message[limit] in message_delims else limit
+
+    return messages

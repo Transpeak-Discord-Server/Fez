@@ -38,7 +38,8 @@ class Fez(commands.Bot):
         'extensions.report',
         'extensions.manage_extensions',
         'extensions.contact_staff',
-        'extensions.message_logging'
+        'extensions.message_logging',
+        'extensions.info_messages'
     ]
 
     async def setup_hook(self) -> None:
@@ -48,7 +49,7 @@ class Fez(commands.Bot):
                 print(f"Loaded extension: {extension}")
             except commands.ExtensionError as e:
                 print(f"Failed to load extension {extension}: {e}")
-
+        await self.tree.sync()
 
     async def on_ready(self) -> None:
         print(f'{self.user} has finished booting.')
