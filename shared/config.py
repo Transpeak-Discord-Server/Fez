@@ -18,12 +18,16 @@ import json
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 FILE_PATH = Path(os.path.dirname(__file__))
+env_file_path = FILE_PATH / ".." / ".env"
+load_dotenv(env_file_path)
 
-# Swap when using the test server
-# BOT_CONFIG = 'bot_config.json'
-BOT_CONFIG = 'test_server_config.json'
+BOT_CONFIG = os.getenv("BOT_CONFIG")
+if BOT_CONFIG is None:
+    raise ValueError("bot config not found in .env file")
+bot_config_str: str = BOT_CONFIG # to make type checkers happy
 
 class Config:
 
-    json_config = json.load(open(os.path.join(FILE_PATH, BOT_CONFIG)))
+    json_config = json.load(open(os.path.join(FILE_PATH, bot_config_str)))

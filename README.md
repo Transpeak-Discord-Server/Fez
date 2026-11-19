@@ -31,6 +31,7 @@ pip install -r requirements.txt
 ```dotenv
 FEZ_TOKEN= # Fez's token
 TBOT_TOKEN= # TransBot's token
+BOT_CONFIG= # Path to bot config, relative to shared/
 ```
 5. Create the `private` folder and add all private files to it
 
