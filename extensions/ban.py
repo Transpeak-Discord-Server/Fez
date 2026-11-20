@@ -163,7 +163,7 @@ async def ban(interaction: discord.Interaction[commands.Bot], user: discord.User
     return None
 
 @app_commands.command()
-@permission_check(Level.LEAD)
+@permission_check(Level.ADMIN)
 async def unban(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, reason: str | None) -> None:
     server = await require_server(interaction)
     if not server: return
