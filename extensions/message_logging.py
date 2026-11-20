@@ -136,5 +136,10 @@ class MessageLogging(commands.Cog):
     async def on_message_delete(self, message: discord.Message) -> None:
         await self.log(message, self.ON_DELETE_DETAILS.title, self.ON_DELETE_DETAILS.colour, message.content)
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        if not isinstance(message.channel, DMChannel | GroupChannel): return
+        await self.log(message, self.ON_MESSAGE_DETAILS.title, self.ON_MESSAGE_DETAILS.colour, message.content)
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(MessageLogging(bot))

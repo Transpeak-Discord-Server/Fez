@@ -90,7 +90,6 @@ class Report(commands.Cog):
 
     async def cog_load(self) -> None:
         await ReportForm.ready(self.bot)
-        await self.bot.tree.sync()
 
     def cog_check(self, ctx: Context[Any]) -> bool:
         return ctx.guild is not None
