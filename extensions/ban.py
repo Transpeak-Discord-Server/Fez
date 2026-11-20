@@ -8,10 +8,11 @@ from dotenv import load_dotenv
 
 from shared.config import Config
 from shared.database import data
+from shared.database.BanDAO import BanDAO
 from shared.database.UserDAO import UserDAO
 from shared.database.__main__ import Database, get_database
 from shared.database.data import BanType
-from shared.utils.misc import require_server, get_member_or_user
+from shared.utils.misc import require_server, get_member_or_user, send_split_message_embeds
 from shared.utils.permissions import Level, permission_check, has_permission
 
 config = Config.json_config
@@ -19,7 +20,42 @@ config = Config.json_config
 env_path = Path(__file__) / ".." / ".env"
 env_file = load_dotenv(env_path)
 
-class Ban(commands.GroupCog):
+async def get_ban_embed(server: discord.Guild, bot: commands.Bot, ban_data: data.Ban) -> discord.Embed:
+    ban_title: str
+    colour: discord.Colour
+    if ban_data.ban_type == BanType.Permanent:
+        ban_title = ":b: Permanent Ban issued"
+        colour = discord.Colour.red()
+    elif ban_data.ban_type == BanType.Temporary:
+        ban_title = ":regional_indicator_b: Temporary Ban issued"
+        colour = discord.Colour.orange()
+    elif ban_data.ban_type == BanType.VC:
+        ban_title = ":mute: VC Ban issued"
+        colour = discord.Colour.blurple()
+    else:
+        ban_title = ":mute: :bear: VC Soft Ban issued"
+        colour = discord.Colour.blurple()
+
+    ban_user = await get_member_or_user(server, bot, ban_data.user_id)
+    ban_user_str = "Unknown" if not ban_user else f'{ban_user.display_name} ({ban_user.id}'
+    ban_user_icon = None if not ban_user else ban_user.display_avatar.url
+
+    ban_issuer = await get_member_or_user(server, bot, ban_data.issuer_id)
+    ban_issuer_str = "Unknown" if not ban_issuer else f'{ban_issuer.display_name} ({ban_issuer.id})'
+    ban_issuer_icon = None if not ban_issuer else ban_issuer.display_avatar.url
+
+    ban_embed = discord.Embed(
+        title=ban_title,
+        colour=colour,
+        timestamp=ban_data.timestamp
+    )
+    ban_embed.add_field(name="Reason", value=ban_data.reason)
+    ban_embed.set_author(name=ban_issuer_str, icon_url=ban_issuer_icon)
+    ban_embed.set_footer(text=ban_user_str, icon_url=ban_user_icon)
+
+    return ban_embed
+
+class Ban:
 
     bot: commands.Bot
     database: Database
@@ -34,6 +70,8 @@ class Ban(commands.GroupCog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.database = get_database()
+        self.bot.tree.add_command(self.ban)
+        self.bot.tree.add_command(self.unban)
 
     async def send_appeal(self, user: discord.Member) -> bool:
         try:
@@ -92,43 +130,8 @@ class Ban(commands.GroupCog):
         return ban_msg_channel
 
 
-    async def send_ban_message(self, ban_data: data.Ban) -> None:
-        ban_title: str
-        colour: discord.Colour
-        if ban_data.ban_type == BanType.Permanent:
-            ban_title = ":b: Permanent Ban issued"
-            colour = discord.Colour.red()
-        elif ban_data.ban_type == BanType.Temporary:
-            ban_title = ":regional_indicator_b: Temporary Ban issued"
-            colour = discord.Colour.orange()
-        elif ban_data.ban_type == BanType.VC:
-            ban_title = ":mute: VC Ban issued"
-            colour = discord.Colour.blurple()
-        else:
-            ban_title = ":mute: :bear: VC Soft Ban issued"
-            colour = discord.Colour.blurple()
-
-        transpeak = self.bot.get_guild(config['server_id'])
-        if transpeak is None:
-            raise RuntimeError("Could not find Transpeak")
-
-        ban_user = await get_member_or_user(transpeak, self.bot, ban_data.user_id)
-        ban_user_str = "Unknown" if not ban_user else f'{ban_user.display_name} ({ban_user.id}'
-        ban_user_icon = None if not ban_user else ban_user.display_avatar.url
-
-        ban_issuer = await get_member_or_user(transpeak, self.bot, ban_data.issuer_id)
-        ban_issuer_str = "Unknown" if not ban_issuer else f'{ban_issuer.display_name} ({ban_issuer.id})'
-        ban_issuer_icon = None if not ban_issuer else ban_issuer.display_avatar.url
-
-        ban_embed = discord.Embed(
-            title=ban_title,
-            colour=colour,
-            timestamp=ban_data.timestamp
-        )
-        ban_embed.add_field(name="Reason", value=ban_data.reason)
-        ban_embed.set_author(name=ban_issuer_str, icon_url=ban_issuer_icon)
-        ban_embed.set_footer(text=ban_user_str, icon_url=ban_user_icon)
-
+    async def send_ban_message(self, server: discord.Guild, ban_data: data.Ban) -> None:
+        ban_embed = await get_ban_embed(server, self.bot, ban_data)
         ban_msg_channel = self.get_ban_message_channel()
         await ban_msg_channel.send(embed=ban_embed)
 
@@ -161,17 +164,70 @@ class Ban(commands.GroupCog):
             ban_dao = self.database.ban_dao(session)
             result = await ban_dao.add_ban(user_id, reason, interaction.user.id, BanType.Permanent)
 
-        await self.send_ban_message(result)
+        server = await require_server(interaction)
+        if not server: return None
+        await self.send_ban_message(server, result)
 
         num_messages_delete = 7 if delete_messages else 0
-        await server.ban(user, delete_message_days=num_messages_delete)
+        await server.ban(user, delete_message_days=num_messages_delete, reason=f'Banned by {interaction.user.display_name} ({interaction.user.id}), reason: {reason}')
+        await interaction.response.send_message(f"Banned {user.display_name} ({user.id})")
 
         return None
 
+    @app_commands.command()
+    @permission_check(Level.LEAD)
+    async def unban(self, interaction: discord.Interaction[commands.Bot], user_id: int, reason: str | None) -> None:
+        server = await require_server(interaction)
+        if not server: return
+        user = await get_member_or_user(server, self.bot, user_id)
+        if not user:
+            await interaction.response.send_message("User not found.")
+            return
+        try:
+            await server.unban(user, reason=f'Unbanned by {interaction.user.display_name} ({interaction.user.id}), reason: {reason}')
+            await interaction.response.send_message(f"Unbanned {user.display_name} ({user.id})")
+        except discord.NotFound:
+            await interaction.response.send_message("User is not banned.")
 
 
+class Bans(app_commands.Group):
 
+    bot: commands.Bot
+    database: Database
+
+    def __init__(self, bot: commands.Bot):
+        super().__init__()
+        self.bot = bot
+        self.database = get_database()
+
+    @app_commands.command()
+    @permission_check(Level.STAFF)
+    async def get_bans(self, interaction: discord.Interaction[commands.Bot], user_id: int) -> None:
+        server = await require_server(interaction)
+        if server is None: return
+
+        async with self.database.get_session() as session:
+            ban_dao = BanDAO(session)
+            user_bans = await ban_dao.get_bans(user_id)
+
+        user = await get_member_or_user(server, self.bot, user_id)
+        display_name = str(user_id) if user is None else user.display_name
+
+        embeds: list[discord.Embed] = []
+        for ban in user_bans:
+            ban_embed = await get_ban_embed(server, self.bot, ban)
+            embeds.append(ban_embed)
+
+        channel = interaction.channel
+        if not isinstance(channel, discord.abc.Messageable):
+            await interaction.response.send_message("Cannot send messages here")
+            return
+
+        await interaction.response.send_message("Sending...", ephemeral=True)
+
+        await send_split_message_embeds(channel, f"Bans for user: {display_name}", embeds)
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Ban(bot))
+    Ban(bot)
+    bot.tree.add_command(Bans(bot))
