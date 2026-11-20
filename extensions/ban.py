@@ -50,6 +50,7 @@ async def get_ban_embed(server: discord.Guild, bot: commands.Bot, ban_data: data
         timestamp=ban_data.timestamp
     )
     ban_embed.add_field(name="Reason", value=ban_data.reason)
+    ban_embed.add_field(name="Ban ID", value=ban_data.ban_id)
     ban_embed.set_author(name=ban_issuer_str, icon_url=ban_issuer_icon)
     ban_embed.set_footer(text=ban_user_str, icon_url=ban_user_icon)
 
@@ -136,43 +137,28 @@ async def send_ban_message(server: discord.Guild, ban_data: data.Ban) -> None:
 @permission_check(Level.STAFF)
 async def ban(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, reason: str, delete_messages: bool = False, send_ban_appeal: bool | None = None) -> None:
 
-    print("We got the ban command :D")
-    print(f"You are trying to ban {user.display_name} ({user.id})")
-
     # This command can take a little while, so we tell Discord we are still doing stuff so it doesn't timeout
     await interaction.response.defer(thinking=True)
 
     server = await require_server(interaction)
     if server is None: return None
 
-    print("We got the server")
-
     if isinstance(user, discord.Member) and has_permission(user, Level.STAFF):
         await interaction.response.send_message("No.")
         return None
 
-    print("not staff")
-
     if send_ban_appeal is None or send_ban_appeal:
         if not await handle_appeal(interaction, user, send_ban_appeal): return None
-
-    print("We handled the appeal")
 
     async with ban_database.get_session() as session:
         ban_dao = ban_database.ban_dao(session)
         result = await ban_dao.add_ban(user.id, reason, interaction.user.id, BanType.Permanent)
 
-    print("We added the ban to the db")
-
     await send_ban_message(server, result)
-
-    print("We sent the ban message")
 
     num_messages_delete = 7 if delete_messages else 0
     await server.ban(user, delete_message_days=num_messages_delete, reason=f'Banned by {interaction.user.display_name} ({interaction.user.id}), reason: {reason}')
     await interaction.followup.send(f"Banned {user.display_name} ({user.id})")
-
-    print("We banned them")
 
     return None
 
