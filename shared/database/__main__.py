@@ -39,6 +39,8 @@ def get_database() -> Database:
     db_url_password = os.getenv("DB_PASSWORD")
     db_url_host = os.getenv("DB_HOST")
     db_url_database = os.getenv("DB_DATABASE")
+    if not db_url_username or not db_url_password or not db_url_host or not db_url_database:
+        raise ValueError("Database .env variables not set")
     db_url = URL.create(
         "postgresql+psycopg",
         username=db_url_username,
