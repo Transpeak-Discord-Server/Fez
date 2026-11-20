@@ -65,8 +65,6 @@ class ContactStaff(commands.GroupCog):
 
         self.ticket_channels = []
 
-        await self.bot.tree.sync()
-
     async def load_ticket_channels(self) -> None:
         server = self.bot.get_guild(config['server_id'])
         if server is None:
@@ -74,12 +72,10 @@ class ContactStaff(commands.GroupCog):
         self.server = server
 
         tickets_category = self.server.get_channel(config['cat_id']['tickets'])
-        print(tickets_category)
         if not isinstance(tickets_category, CategoryChannel):
             raise ValueError("Could not find tickets category from id in config")
         self.ticket_category = tickets_category
         self.ticket_channels = tickets_category.text_channels
-        print(self.ticket_channels)
 
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command("contact-staff")
@@ -266,6 +262,7 @@ class ContactStaff(commands.GroupCog):
         ticket_embed.set_footer(text=f"{ticket_details.user.name} | {ticket_details.user.id}", icon_url=ticket_details.user.display_avatar.url)
 
         await self.ticket_log_channel.send(file=ticket_file, embed=ticket_embed)
+        await ticket_details.user.send(embed=ticket_embed)
         await ticket_details.channel.delete(reason=f"Ticket closed by {interaction.user.name}")
 
         return None

@@ -49,6 +49,9 @@ class Fez(commands.Bot):
                 print(f"Loaded extension: {extension}")
             except commands.ExtensionError as e:
                 print(f"Failed to load extension {extension}: {e}")
+        print("Syncing...")
+        await self.tree.sync()
+        print("Successfully synced!")
 
 
     async def on_ready(self) -> None:
