@@ -23,7 +23,7 @@ class Ban(commands.GroupCog):
 
     bot: commands.Bot
     database: Database
-    ban_msg_channel: discord.TextChannel
+    ban_msg_channel: discord.TextChannel | None
     appeal_message: str = 'You have been removed from Transpeak. Should you wish to appeal this ban, please read the information below and follow the guidelines.\n' \
                           'An appeal can be granted for two reasons: (1) You feel your ban was unjustified; (2) You feel you have reformed and are able to take place on the server once again.\n' \
                           'If you are requesting an appeal because you feel your ban was unjustified, you may make your request immediately. However, if you are requesting an appeal due to reformation you will be required to wait at least six months before the appeal will be looked at.\n' \
@@ -34,11 +34,6 @@ class Ban(commands.GroupCog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.database = get_database()
-        ban_msg_channel_id = config.json_config['ch_id']['#bans-warnings']
-        ban_msg_channel = self.bot.get_channel(ban_msg_channel_id)
-        if not isinstance(ban_msg_channel, discord.TextChannel):
-            raise ValueError("Could not find #bans-warnings from config ID")
-        self.ban_msg_channel = ban_msg_channel
 
     async def send_appeal(self, user: discord.Member) -> bool:
         try:
@@ -87,6 +82,15 @@ class Ban(commands.GroupCog):
 
         return True
 
+    def get_ban_message_channel(self) -> discord.TextChannel:
+        if self.ban_msg_channel is not None: return self.ban_msg_channel
+        ban_msg_channel_id = config['ch_id']['#bans-warnings']
+        ban_msg_channel = self.bot.get_channel(ban_msg_channel_id)
+        if not isinstance(ban_msg_channel, discord.TextChannel):
+            raise ValueError("Could not find #bans-warnings from config ID")
+        self.ban_msg_channel = ban_msg_channel
+        return ban_msg_channel
+
 
     async def send_ban_message(self, ban_data: data.Ban) -> None:
         ban_title: str
@@ -104,7 +108,7 @@ class Ban(commands.GroupCog):
             ban_title = ":mute: :bear: VC Soft Ban issued"
             colour = discord.Colour.blurple()
 
-        transpeak = self.bot.get_guild(config.json_config['server_id'])
+        transpeak = self.bot.get_guild(config['server_id'])
         if transpeak is None:
             raise RuntimeError("Could not find Transpeak")
 
@@ -125,7 +129,8 @@ class Ban(commands.GroupCog):
         ban_embed.set_author(name=ban_issuer_str, icon_url=ban_issuer_icon)
         ban_embed.set_footer(text=ban_user_str, icon_url=ban_user_icon)
 
-        await self.ban_msg_channel.send(embed=ban_embed)
+        ban_msg_channel = self.get_ban_message_channel()
+        await ban_msg_channel.send(embed=ban_embed)
 
 
     @app_commands.command()
