@@ -55,139 +55,137 @@ async def get_ban_embed(server: discord.Guild, bot: commands.Bot, ban_data: data
 
     return ban_embed
 
-class Ban:
-
-    bot: commands.Bot
-    database: Database
-    ban_msg_channel: discord.TextChannel | None
-    appeal_message: str = 'You have been removed from Transpeak. Should you wish to appeal this ban, please read the information below and follow the guidelines.\n' \
+ban_bot: commands.Bot
+ban_database: Database
+ban_msg_channel: discord.TextChannel | None = None
+appeal_message: str = 'You have been removed from Transpeak. Should you wish to appeal this ban, please read the information below and follow the guidelines.\n' \
                           'An appeal can be granted for two reasons: (1) You feel your ban was unjustified; (2) You feel you have reformed and are able to take place on the server once again.\n' \
                           'If you are requesting an appeal because you feel your ban was unjustified, you may make your request immediately. However, if you are requesting an appeal due to reformation you will be required to wait at least six months before the appeal will be looked at.\n' \
                           'You may only send in one reform appeal, and one unjust appeal. If both of these get denied, you are not eligible for any future appeals.' \
                           'Please note that if you have previously been unbanned due to a reformation appeal and now have been banned again, ***you may not appeal your ban again.***\n' \
                           'To request an appeal join the following server and follow the instructions found in #welcome: https://discord.gg/SWFufu7cp2\n\n'
 
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-        self.database = get_database()
-        self.bot.tree.add_command(self.ban)
-        self.bot.tree.add_command(self.unban)
-
-    async def send_appeal(self, user: discord.Member) -> bool:
-        try:
-            await user.send(self.appeal_message)
-            return True
-        except Exception as e:
-            print(f"Failed to send appeal message to user {user.id}: {e}")
-            return False
 
 
-
-    async def handle_appeal(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, send_appeal: bool | None) -> bool:
-        if isinstance(user, discord.User):
-            return True if not send_appeal else False
-
-        if send_appeal:
-            success = await self.send_appeal(user)
-            if not success: await interaction.followup.send("Appeal message failed to send. User has not been banned.")
-            return success
-
-        one_day = datetime.timedelta(days=1)
-        time_since_join: datetime.timedelta
-        join_time = user.joined_at
-        time_since_join = datetime.timedelta(0) if join_time is None else datetime.datetime.now(tz=datetime.timezone.utc) - join_time
-
-        async with self.database.get_session() as session:
-            user_dao = UserDAO(session)
-            user_db = await user_dao.get_user_info(user.id)
-            if not user_db: message_count = 0
-            else: message_count = user_db.message_count
-
-        if time_since_join >= one_day and message_count >= 50:
-            success = await self.send_appeal(user)
-            if success:
-                await interaction.followup.send("Appeal message sent")
-            else:
-                await interaction.followup.send("Appeal message failed to send. User has not been banned.")
-            return success
-
-        if time_since_join < one_day and message_count < 50:
-            await interaction.followup.send("Appeal message not sent. User has been in the server for less than a day and has less than 50 messages.")
-        elif time_since_join < one_day:
-            await interaction.followup.send("Appeal message not sent. User has sent 50 messages, but has not been in the server for more than a day.")
-        else:
-            await interaction.followup.send("Appeal message not sent. User has been in the server for over a day, but has not sent 50 messages.")
-
+async def send_appeal(user: discord.Member) -> bool:
+    try:
+        await user.send(appeal_message)
         return True
-
-    def get_ban_message_channel(self) -> discord.TextChannel:
-        if self.ban_msg_channel is not None: return self.ban_msg_channel
-        ban_msg_channel_id = config['ch_id']['#bans-warnings']
-        ban_msg_channel = self.bot.get_channel(ban_msg_channel_id)
-        if not isinstance(ban_msg_channel, discord.TextChannel):
-            raise ValueError("Could not find #bans-warnings from config ID")
-        self.ban_msg_channel = ban_msg_channel
-        return ban_msg_channel
+    except Exception as e:
+        print(f"Failed to send appeal message to user {user.id}: {e}")
+        return False
 
 
-    async def send_ban_message(self, server: discord.Guild, ban_data: data.Ban) -> None:
-        ban_embed = await get_ban_embed(server, self.bot, ban_data)
-        ban_msg_channel = self.get_ban_message_channel()
-        await ban_msg_channel.send(embed=ban_embed)
+
+async def handle_appeal(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, should_send_appeal: bool | None) -> bool:
+    if isinstance(user, discord.User):
+        await interaction.response.send_message("Appeal message not sent, user is not in the server. User has not been banned.")
+        return False
+
+    if should_send_appeal:
+        success = await send_appeal(user)
+        if not success: await interaction.response.send_message("Appeal message failed to send. User has not been banned.")
+        return success
+
+    one_day = datetime.timedelta(days=1)
+    time_since_join: datetime.timedelta
+    join_time = user.joined_at
+    time_since_join = datetime.timedelta(0) if join_time is None else datetime.datetime.now(tz=datetime.timezone.utc) - join_time
+
+    async with ban_database.get_session() as session:
+        user_dao = UserDAO(session)
+        user_db = await user_dao.get_user_info(user.id)
+        if not user_db: message_count = 0
+        else: message_count = user_db.message_count
+
+    if time_since_join >= one_day and message_count >= 50:
+        success = await send_appeal(user)
+        if success:
+            await interaction.response.send_message("Appeal message sent")
+        else:
+            await interaction.response.send_message("Appeal message failed to send. User has not been banned.")
+        return success
+
+    if time_since_join < one_day and message_count < 50:
+        await interaction.response.send_message("Appeal message not sent. User has been in the server for less than a day and has less than 50 messages.")
+    elif time_since_join < one_day:
+        await interaction.response.send_message("Appeal message not sent. User has sent 50 messages, but has not been in the server for more than a day.")
+    else:
+        await interaction.response.send_message("Appeal message not sent. User has been in the server for over a day, but has not sent 50 messages.")
+
+    return True
+
+def get_ban_message_channel() -> discord.TextChannel:
+    global ban_msg_channel
+    if ban_msg_channel is not None: return ban_msg_channel
+    ban_msg_channel_id = config['ch_id']['#bans-warnings']
+    ban_msg_channel_ = ban_bot.get_channel(ban_msg_channel_id)
+    if not isinstance(ban_msg_channel_, discord.TextChannel):
+        raise ValueError("Could not find #bans-warnings from config ID")
+    ban_msg_channel = ban_msg_channel_
+    return ban_msg_channel_
 
 
-    @app_commands.command()
-    @permission_check(Level.STAFF)
-    async def ban(self, interaction: discord.Interaction[commands.Bot], user_id: int, reason: str, delete_messages: bool = False, send_appeal: bool | None = None) -> None:
+async def send_ban_message(server: discord.Guild, ban_data: data.Ban) -> None:
+    ban_embed = await get_ban_embed(server, ban_bot, ban_data)
+    channel = get_ban_message_channel()
+    await channel.send(embed=ban_embed)
 
-        server = await require_server(interaction)
-        if server is None: return None
 
-        user = await get_member_or_user(server, self.bot, user_id)
+@app_commands.command()
+@permission_check(Level.STAFF)
+async def ban(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, reason: str, delete_messages: bool = False, send_ban_appeal: bool | None = None) -> None:
 
-        if user is None:
-            await interaction.response.send_message("Could not find user.")
-            return None
+    print("We got the ban command :D")
+    print(f"You are trying to ban {user.display_name} ({user.id})")
 
-        if isinstance(user, discord.Member) and has_permission(user, Level.STAFF):
-            await interaction.response.send_message("No.")
-            return None
+    # This command can take a little while, so we tell Discord we are still doing stuff so it doesn't timeout
+    await interaction.response.defer(thinking=True)
 
-        if not isinstance(user, discord.Member) and send_appeal:
-            await interaction.response.send_message("Cannot send appeal, user is not in the server. The user has not been banned.")
-            return None
+    server = await require_server(interaction)
+    if server is None: return None
 
-        if send_appeal is None or send_appeal:
-            if not await self.handle_appeal(interaction, user, send_appeal): return None
+    print("We got the server")
 
-        async with self.database.get_session() as session:
-            ban_dao = self.database.ban_dao(session)
-            result = await ban_dao.add_ban(user_id, reason, interaction.user.id, BanType.Permanent)
-
-        server = await require_server(interaction)
-        if not server: return None
-        await self.send_ban_message(server, result)
-
-        num_messages_delete = 7 if delete_messages else 0
-        await server.ban(user, delete_message_days=num_messages_delete, reason=f'Banned by {interaction.user.display_name} ({interaction.user.id}), reason: {reason}')
-        await interaction.response.send_message(f"Banned {user.display_name} ({user.id})")
-
+    if isinstance(user, discord.Member) and has_permission(user, Level.STAFF):
+        await interaction.response.send_message("No.")
         return None
 
-    @app_commands.command()
-    @permission_check(Level.LEAD)
-    async def unban(self, interaction: discord.Interaction[commands.Bot], user_id: int, reason: str | None) -> None:
-        server = await require_server(interaction)
-        if not server: return
-        user = await get_member_or_user(server, self.bot, user_id)
-        if not user:
-            await interaction.response.send_message("User not found.")
-            return
-        try:
-            await server.unban(user, reason=f'Unbanned by {interaction.user.display_name} ({interaction.user.id}), reason: {reason}')
-            await interaction.response.send_message(f"Unbanned {user.display_name} ({user.id})")
-        except discord.NotFound:
-            await interaction.response.send_message("User is not banned.")
+    print("not staff")
+
+    if send_ban_appeal is None or send_ban_appeal:
+        if not await handle_appeal(interaction, user, send_ban_appeal): return None
+
+    print("We handled the appeal")
+
+    async with ban_database.get_session() as session:
+        ban_dao = ban_database.ban_dao(session)
+        result = await ban_dao.add_ban(user.id, reason, interaction.user.id, BanType.Permanent)
+
+    print("We added the ban to the db")
+
+    await send_ban_message(server, result)
+
+    print("We sent the ban message")
+
+    num_messages_delete = 7 if delete_messages else 0
+    await server.ban(user, delete_message_days=num_messages_delete, reason=f'Banned by {interaction.user.display_name} ({interaction.user.id}), reason: {reason}')
+    await interaction.followup.send(f"Banned {user.display_name} ({user.id})")
+
+    print("We banned them")
+
+    return None
+
+@app_commands.command()
+@permission_check(Level.LEAD)
+async def unban(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, reason: str | None) -> None:
+    server = await require_server(interaction)
+    if not server: return
+    try:
+        await server.unban(user, reason=f'Unbanned by {interaction.user.display_name} ({interaction.user.id}), reason: {reason}')
+        await interaction.response.send_message(f"Unbanned {user.display_name} ({user.id})")
+    except discord.NotFound:
+        await interaction.response.send_message("User is not banned.")
 
 
 class Bans(app_commands.Group):
@@ -202,16 +200,15 @@ class Bans(app_commands.Group):
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def get_bans(self, interaction: discord.Interaction[commands.Bot], user_id: int) -> None:
+    async def get_bans(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member) -> None:
         server = await require_server(interaction)
         if server is None: return
 
         async with self.database.get_session() as session:
             ban_dao = BanDAO(session)
-            user_bans = await ban_dao.get_bans(user_id)
+            user_bans = await ban_dao.get_bans(user.id)
 
-        user = await get_member_or_user(server, self.bot, user_id)
-        display_name = str(user_id) if user is None else user.display_name
+        display_name = user.display_name
 
         embeds: list[discord.Embed] = []
         for ban in user_bans:
@@ -229,5 +226,9 @@ class Bans(app_commands.Group):
 
 
 async def setup(bot: commands.Bot) -> None:
-    Ban(bot)
+    global ban_bot, ban_database
+    ban_bot = bot
+    ban_database = get_database()
+    bot.tree.add_command(ban)
+    bot.tree.add_command(unban)
     bot.tree.add_command(Bans(bot))

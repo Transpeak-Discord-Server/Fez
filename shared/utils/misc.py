@@ -81,6 +81,7 @@ async def permission_error(context: commands.Context[Any] | discord.Interaction[
 async def tree_error(interaction: discord.Interaction[Any], error: Exception) -> None:
     if isinstance(error, UserPermissionsError):
         await permission_error(interaction, error)
+    print(error)
 
 async def shared_error(ctx: commands.Context[Any], error: Exception) -> None:
     if isinstance(error, commands.CommandNotFound):
