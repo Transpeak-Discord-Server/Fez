@@ -37,7 +37,7 @@ async def get_ban_embed(server: discord.Guild, bot: commands.Bot, ban_data: data
         colour = discord.Colour.blurple()
 
     ban_user = await get_member_or_user(server, bot, ban_data.user_id)
-    ban_user_str = "Unknown" if not ban_user else f'{ban_user.display_name} ({ban_user.id}'
+    ban_user_str = "Unknown" if not ban_user else f'{ban_user.display_name} ({ban_user.id})'
     ban_user_icon = None if not ban_user else ban_user.display_avatar.url
 
     ban_issuer = await get_member_or_user(server, bot, ban_data.issuer_id)
