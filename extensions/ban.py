@@ -196,6 +196,10 @@ class Bans(app_commands.Group):
 
         display_name = user.display_name
 
+        if len(user_bans) == 0:
+            await interaction.response.send_message("This user has no reported bans")
+            return
+
         embeds: list[discord.Embed] = []
         for ban in user_bans:
             ban_embed = await get_ban_embed(server, self.bot, ban)
