@@ -313,4 +313,3 @@ class Ban(app_commands.Group):
 
 async def setup(bot: commands.Bot) -> None:
     bot.tree.add_command(Ban(bot))
-    await bot.tree.sync()

@@ -16,6 +16,7 @@ class ManageExtensions(app_commands.Group):
     async def unload(self, interaction: discord.Interaction[commands.Bot], extension: str) -> None:
         try:
             await self.bot.unload_extension(extension)
+            await self.bot.tree.sync()
             await interaction.response.send_message("Extension unloaded.")
         except commands.ExtensionNotFound:
             await interaction.response.send_message("That is not a valid extension!")
@@ -27,6 +28,7 @@ class ManageExtensions(app_commands.Group):
     async def load(self, interaction: discord.Interaction[commands.Bot], extension: str) -> None:
         try:
             await self.bot.load_extension(extension)
+            await self.bot.tree.sync()
             await interaction.response.send_message("Extension loaded.")
         except commands.ExtensionNotFound:
             await interaction.response.send_message("That is not a valid extension!")
@@ -43,6 +45,7 @@ class ManageExtensions(app_commands.Group):
     async def reload(self, interaction: discord.Interaction[commands.Bot], extension: str) -> None:
         try:
             await self.bot.reload_extension(extension)
+            await self.bot.tree.sync()
             await interaction.response.send_message("Extension reloaded.")
         except commands.ExtensionNotFound:
             await interaction.response.send_message("That is not a valid extension!")
