@@ -1,6 +1,9 @@
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncIterator
 
+from dotenv import load_dotenv
 from sqlalchemy import URL
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker, AsyncSession
 
@@ -27,3 +30,21 @@ class Database:
                 yield session
             finally:
                 await session.close()
+
+env_path = Path(__file__) / ".." / ".." / ".env"
+env = load_dotenv(env_path)
+
+def get_database() -> Database:
+    db_url_username = os.getenv("DB_USERNAME")
+    db_url_password = os.getenv("DB_PASSWORD")
+    db_url_host = os.getenv("DB_HOST")
+    db_url_database = os.getenv("DB_DATABASE")
+    if not db_url_username or not db_url_password or not db_url_host or not db_url_database:
+        raise ValueError("Database .env variables not set")
+    db_url = URL.create(
+        "postgresql+psycopg",
+        username=db_url_username,
+        password=db_url_password,
+        host=db_url_host,
+        database=db_url_database)
+    return Database(db_url)
