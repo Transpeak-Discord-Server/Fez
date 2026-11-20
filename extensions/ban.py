@@ -155,10 +155,11 @@ async def ban(interaction: discord.Interaction[commands.Bot], user: discord.User
         result = await ban_dao.add_ban(user.id, reason, interaction.user.id, BanType.Permanent)
 
     await send_ban_message(server, result)
+    ban_embed = await get_ban_embed(server, ban_bot, result)
 
     num_messages_delete = 7 if delete_messages else 0
     await server.ban(user, delete_message_days=num_messages_delete, reason=f'Banned by {interaction.user.display_name} ({interaction.user.id}), reason: {reason}')
-    await interaction.followup.send(f"Banned {user.display_name} ({user.id})")
+    await interaction.followup.send(f"Banned {user.display_name} ({user.id})", embed=ban_embed)
 
     return None
 
@@ -186,7 +187,7 @@ class Bans(app_commands.Group):
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def get_bans(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member) -> None:
+    async def get(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member) -> None:
         server = await require_server(interaction)
         if server is None: return
 
@@ -213,6 +214,20 @@ class Bans(app_commands.Group):
         await interaction.response.send_message("Sending...", ephemeral=True)
 
         await send_split_message_embeds(channel, f"Bans for user: {display_name}", embeds)
+
+    @app_commands.command()
+    @permission_check(Level.STAFF)
+    async def edit(self, interaction: discord.Interaction[commands.Bot], ban_id: int, reason: str) -> None:
+        server = await require_server(interaction)
+        if not server: return
+        try:
+            async with self.database.get_session() as session:
+                ban_dao = BanDAO(session)
+                ban = await ban_dao.edit_ban(ban_id, reason=reason)
+            ban_embed = await get_ban_embed(server, self.bot, ban)
+            await interaction.response.send_message("Ban updated.", embed=ban_embed)
+        except ValueError:
+            await interaction.response.send_message("Ban not found.")
 
 
 async def setup(bot: commands.Bot) -> None:
