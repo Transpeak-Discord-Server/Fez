@@ -29,6 +29,7 @@ class Database:
             try:
                 yield session
             finally:
+                await session.commit()
                 await session.close()
 
 env_path = Path(__file__) / ".." / ".." / ".env"
