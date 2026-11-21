@@ -36,7 +36,7 @@ async def add_timeout(user: discord.Member, server: discord.Guild, interaction: 
     if bot_role is None or lead_mod_role is None or mod_role is None or staff_role is None or helper_role is None:
         raise ValueError("Could not find one or more roles from config IDs")
 
-    channel_overwrites = {
+    channel_overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {
         user: discord.PermissionOverwrite(view_channel=True, send_messages=True),
         bot_role: discord.PermissionOverwrite(view_channel=True,send_messages=True,manage_channels=True),
         lead_mod_role: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True),
