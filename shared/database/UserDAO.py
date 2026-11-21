@@ -1,10 +1,10 @@
 import datetime
 
-from sqlalchemy import select, insert, update
+from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.database import data
-from shared.database.tables import User
+from shared.database import data, tables
+from shared.database.tables import User, Watchlist
 
 MISSING = sentinel("MISSING")
 
@@ -98,3 +98,36 @@ class UserDAO:
         user = (await self.session.execute(user_select)).scalar()
         if not user: return None
         return self.db_to_data_user(user)
+
+    async def get_watchlist(self, user_id: int) -> str | None:
+        watchlist_select = select(Watchlist).where(Watchlist.user_id == user_id)
+        watchlist = (await self.session.execute(watchlist_select)).scalar()
+        if watchlist is None: return None
+        return watchlist.description
+
+    async def set_watchlist(self, user_id: int, watchlist: str) -> str:
+        user = tables.Watchlist(user_id=user_id, description=watchlist)
+        await self.session.merge(user)
+        return watchlist
+
+    async def clear_watchlist(self, user_id: int) -> bool:
+        watchlist_delete = delete(Watchlist).returning(Watchlist).where(Watchlist.user_id == user_id)
+        watchlist = (await self.session.execute(watchlist_delete)).scalar()
+        return watchlist is not None
+
+    async def get_special_considerations(self, user_id: int) -> str | None:
+        sc_select = select(tables.SpecialConsiderations).where(tables.SpecialConsiderations.user_id == user_id)
+        sc = (await self.session.execute(sc_select)).scalar()
+        if not sc: return None
+        return sc.description
+
+    async def set_special_considerations(self, user_id: int, sc: str) -> str:
+        sc_entry = tables.SpecialConsiderations(user_id=user_id, description=sc)
+        await self.session.merge(sc_entry)
+        return sc
+
+    async def clear_special_considerations(self, user_id: int) -> bool:
+        sc_delete = delete(tables.SpecialConsiderations).returning(tables.SpecialConsiderations).where(
+            tables.SpecialConsiderations.user_id == user_id)
+        sc = (await self.session.execute(sc_delete)).scalar()
+        return sc is not None
