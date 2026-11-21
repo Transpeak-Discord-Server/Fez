@@ -63,6 +63,8 @@ class UserDAO:
         db_user = (await self.session.execute(user_update)).scalar_one()
         return self.db_to_data_user(db_user)
 
+    async def ensure_user(self, user_id: int) -> None:
+        await self.new_user(user_id)
 
     async def increment_message_count(self, user_id: int, *, step: int = 1) -> data.User:
         user = await self.get_user_info(user_id)

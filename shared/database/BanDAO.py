@@ -20,11 +20,8 @@ class BanDAO:
         if timestamp is None:
             timestamp = datetime.now(tz=timezone.utc)
 
-        if not await UserDAO(self.session).get_user_info(user_id):
-            await UserDAO(self.session).new_user(user_id)
-
-        if not await UserDAO(self.session).get_user_info(issuer_id):
-            await UserDAO(self.session).new_user(issuer_id)
+        await UserDAO(self.session).ensure_user(user_id)
+        await UserDAO(self.session).ensure_user(issuer_id)
 
         ban_statement = insert(Ban).returning(Ban).values(user_id=user_id, reason=reason, issuer_id=issuer_id, ban_timestamp=timestamp, ban_type=ban_type.value)
         ban = (await self.session.execute(ban_statement)).scalar_one()
