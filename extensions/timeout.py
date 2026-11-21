@@ -1,7 +1,4 @@
-import dataclasses
-from enum import Enum
 from pathlib import Path
-from typing import Mapping
 
 import discord
 from discord import app_commands
@@ -24,6 +21,8 @@ async def add_timeout(user: discord.Member, server: discord.Guild, interaction: 
     timeout_role = server.get_role(timeout_role_id)
     timeout_category = server.get_channel(timeout_category_id)
 
+    if not timeout_role:
+        raise ValueError("Could not get timeout role from config ID")
     if not isinstance(timeout_category, discord.CategoryChannel):
         raise ValueError("Could not get timeout category from config ID")
 
@@ -55,6 +54,7 @@ async def add_timeout(user: discord.Member, server: discord.Guild, interaction: 
     # TODO: save roles when get_database() is merged into main
 
     await user.remove_roles(*user.roles, reason=f"Role removal for timeout by: {interaction.user.display_name} ({interaction.user.id})")
+    await user.add_roles(timeout_role, reason=f"Timed out by: {interaction.user.display_name} ({interaction.user.id})")
     await channel.send(timeout_msg)
 
 @app_commands.command()
