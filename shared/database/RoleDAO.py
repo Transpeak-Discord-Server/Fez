@@ -1,7 +1,8 @@
 import discord
-from sqlalchemy import select, Insert, insert, delete
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from shared.database.UserDAO import UserDAO
 from shared.database.tables import UserRole
 
 
@@ -43,13 +44,13 @@ class RoleDAO:
     async def save_role_ids(self, user_id: int, roles: list[int]) -> None:
         await self.clear_saved_roles(user_id)
 
-        # TODO: When UserDAO is merged into main, add a thing here to make sure the user exists in the user table
+        await UserDAO(self.session).ensure_user(user_id)
 
-        statements: list[Insert] = []
+        db_objects: list[UserRole] = []
         for role in roles:
-            statement = insert(UserRole).values(user_id=user_id, role_id=role)
-            statements.append(statement)
-        self.session.add_all(statements)
+            user_role = UserRole(user_id=user_id, role_id=role)
+            db_objects.append(user_role)
+        self.session.add_all(db_objects)
 
     async def save_roles(self, user_id: int, roles: list[discord.Role]) -> None:
         role_ids: list[int] = []
