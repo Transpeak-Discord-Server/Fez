@@ -45,7 +45,7 @@ class ContactStaff(commands.GroupCog):
         self.server = server
 
         staff_role = self.server.get_role(config['rl_id']['staff'])
-        bot_role = self.server.get_role(config['rl_id']['bot'])
+        bot_role = self.server.get_role(config['rl_id']['/'])
         staff_alert_role = self.server.get_role(config['rl_id']['staff-alert'])
         if staff_role is None or bot_role is None or staff_alert_role is None:
             raise ValueError("Could not find roles from role ids in config")
