@@ -40,6 +40,7 @@ async def add_timeout(user: discord.Member, server: discord.Guild, interaction: 
         raise ValueError("Could not find one or more roles from config IDs")
 
     channel_overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {
+        server.default_role: discord.PermissionOverwrite(view_channel=False),
         user: discord.PermissionOverwrite(view_channel=True, send_messages=True),
         bot_role: discord.PermissionOverwrite(view_channel=True,send_messages=True,manage_channels=True),
         lead_mod_role: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True),
@@ -55,7 +56,11 @@ async def add_timeout(user: discord.Member, server: discord.Guild, interaction: 
         reason=f"Timeout channel for {user.display_name}, timed out by: {interaction.user.display_name} ({interaction.user.id}"
     )
 
-    roles_to_remove = [role for role in user.roles if not role.is_default()]
+    roles_to_remove = [role for role in user.roles
+                       if not role.is_default() and
+                       role.name not in config['identities']['transfemale_pronouns'] and
+                       role.name not in config['identities']['transmale_pronouns'] and
+                       role.name not in config['identities']['nonbinary_pronouns']]
 
     async with database.get_session() as session:
         role_dao = RoleDAO(session)
