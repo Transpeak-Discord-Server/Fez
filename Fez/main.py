@@ -39,6 +39,7 @@ class Fez(commands.Bot):
         'extensions.manage_extensions',
         'extensions.contact_staff',
         'extensions.message_logging',
+        'extensions.ban',
         'extensions.speak'
     ]
 
