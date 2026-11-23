@@ -39,11 +39,11 @@ class Fez(commands.Bot):
         'extensions.manage_extensions',
         'extensions.contact_staff',
         'extensions.message_logging',
-        # 'extensions.ban',
+        'extensions.ban',
         'extensions.speak',
-        # 'extensions.user',
-        # 'extensions.message_count',
-        # 'extensions.timeout',
+        'extensions.user',
+        'extensions.message_count',
+        'extensions.timeout',
         'extensions.mentionfind'
     ]
 
