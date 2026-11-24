@@ -1,8 +1,11 @@
+import datetime
+
 import discord
 from discord import app_commands, ForumChannel
 from discord.ext import commands
 
 from shared.config import Config
+from shared.database import data
 from shared.database.MessageCountDAO import MessageCountDAO
 from shared.database.UserDAO import UserDAO
 from shared.database.__main__ import Database, get_database
@@ -142,21 +145,23 @@ class MessageCount(commands.GroupCog):
 
         await interaction.followup.send(top_10_msg)
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message) -> None:
-        server = message.guild
-        if server is None: return
 
-        channel = message.channel
-        if isinstance(channel, discord.DMChannel | discord.GroupChannel | discord.PartialMessageable): return
+    @staticmethod
+    async def check_verified(server: discord.Guild, message: discord.Message, user_info: data.User) -> None:
+        new_role = server.get_role(config['rl_id']['new'])
+        regular_role = server.get_role(config['rl_id']['regular'])
 
-        if message.author.bot:
-            return
+        if new_role is None or regular_role is None: return
 
-        async with self.database.get_session() as session:
-            user_dao = UserDAO(session)
-            await user_dao.set_last_message(message.author.id, message.content)
+        author = message.author
+        if isinstance(author, discord.Member) and author.joined_at is not None and new_role in author.roles:
+            time_since_join = datetime.datetime.now() - author.joined_at
+            if user_info.message_count >= 500 and time_since_join > datetime.timedelta(days=1):
+                await author.remove_roles(new_role)
+                await author.add_roles(regular_role)
+                await message.reply("You are now verified and can opt in to regular-only channels.")
 
+    async def update_message_count(self, channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.Thread, server: discord.Guild, author: discord.User | discord.Member) -> None:
         for ignored_channel in config['ignored_channels']:
             if config['ch_id'][ignored_channel] == channel.id:
                 return
@@ -175,7 +180,26 @@ class MessageCount(commands.GroupCog):
 
         async with self.database.get_session() as session:
             user_dao = UserDAO(session)
-            user_info = await user_dao.increment_message_count(message.author.id)
+            await user_dao.increment_message_count(author.id)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        server = message.guild
+        if server is None: return
+
+        channel = message.channel
+        if isinstance(channel, discord.DMChannel | discord.GroupChannel | discord.PartialMessageable): return
+
+        if message.author.bot:
+            return
+
+        async with self.database.get_session() as session:
+            user_dao = UserDAO(session)
+            user_info = await user_dao.set_last_message(message.author.id, message.content)
+
+        await self.update_message_count(channel, server, message.author)
+
+        await self.check_verified(server, message, user_info)
 
         if user_info.message_count % 1000 == 0 and isinstance(channel, discord.TextChannel | discord.VoiceChannel):
             await channel.send(f"**:trophy: {message.author.display_name} has reached {user_info.message_count} messages!**")
