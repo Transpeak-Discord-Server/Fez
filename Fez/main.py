@@ -45,7 +45,8 @@ class Fez(commands.Bot):
         'extensions.message_count',
         'extensions.timeout',
         'extensions.mentionfind',
-        'extensions.channel'
+        'extensions.channel',
+        'extensions.mentionfind'
     ]
 
     async def setup_hook(self) -> None:
