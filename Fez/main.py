@@ -46,7 +46,7 @@ class Fez(commands.Bot):
         'extensions.timeout',
         'extensions.mentionfind',
         'extensions.channel',
-        'extensions.mentionfind'
+        'extensions.roles'
     ]
 
     async def setup_hook(self) -> None:
@@ -83,7 +83,7 @@ class Main:
 
         discord.utils.setup_logging()
 
-        client = Fez(intents=intents, command_prefix='!', tree_cls=FezTree)
+        client = Fez(intents=intents, command_prefix='!', tree_cls=FezTree, help_command=None)
         client.run(token)
 
 if __name__ == "__main__":

@@ -59,12 +59,7 @@ async def get_ban_embed(server: discord.Guild, bot: commands.Bot, ban_data: data
 ban_bot: commands.Bot
 ban_database: Database
 ban_msg_channel: discord.TextChannel | None = None
-appeal_message: str = 'You have been removed from Transpeak. Should you wish to appeal this ban, please read the information below and follow the guidelines.\n' \
-                          'An appeal can be granted for two reasons: (1) You feel your ban was unjustified; (2) You feel you have reformed and are able to take place on the server once again.\n' \
-                          'If you are requesting an appeal because you feel your ban was unjustified, you may make your request immediately. However, if you are requesting an appeal due to reformation you will be required to wait at least six months before the appeal will be looked at.\n' \
-                          'You may only send in one reform appeal, and one unjust appeal. If both of these get denied, you are not eligible for any future appeals.' \
-                          'Please note that if you have previously been unbanned due to a reformation appeal and now have been banned again, ***you may not appeal your ban again.***\n' \
-                          'To request an appeal join the following server and follow the instructions found in #welcome: https://discord.gg/SWFufu7cp2\n\n'
+appeal_message: str = config['appeal_message']
 
 
 

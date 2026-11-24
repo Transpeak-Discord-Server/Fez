@@ -299,15 +299,21 @@
         "new": 1024218455509057577,
         "musicbot": 1024218455479685198,
         "timeout": 1024218455479685197,
+        "she": 1024218455479685195,
+        "he": 1024218455479685196,
+        "they": 1024218455479685194,
         "ae": 1024218455479685193,
         "xey": 1024218455479685190,
+        "xe": 1024218455479685191,
         "it": 1024218455441944585,
         "fae": 1024218455441944584,
         "ey": 1024218455441944583,
         "ve": 1024218455441944582,
         "ne": 1024218455441944581,
+        "ze": 1024218455479685192,
         "shi": 1208538507673600030,
         "ask-pronouns": 1024218455441944579,
+        "any-pronouns": 1024218455441944580,
         "no-pronouns": 1024218455441944578,
         "switch-pronouns": 1024218455441944577,
         "mirrored-pronouns": 1043983647256100925,
@@ -315,6 +321,10 @@
         "not-she": 1024218455425175581,
         "not-they": 1024218455425175580,
         "ask-gender": 1024218455425175577,
+        "female": 1024218455328706619,
+        "male": 1024218455328706618,
+        "trans-guy": 1024218455303520276,
+        "androgyne": 1024218455425175574,
         "nonbinary": 1024218455425175576,
         "agender": 1024218455425175575,
         "aporagender": 1024218455425175573,
@@ -385,6 +395,9 @@
         "namefluid": 1122915745031016560,
         "cis-female": 1024218455257403436,
         "cis-male": 1024218455257403435,
+        "questioning": 1024218455425175578,
+        "undisclosed": 1024218455425175579,
+        "unlabeled": 1574808981908750356,
         "detransitioner": 1138099881697882222,
         "tm-access": 1024218455257403434,
         "tf-access": 1024218455257403433,
@@ -679,7 +692,7 @@
             "xey",
             "ne",
             "shi",
-            "any-pronoun",
+            "any-pronouns",
             "ask-pronouns",
             "switch-pronouns",
             "no-pronouns",
@@ -790,7 +803,7 @@
             "xey",
             "ne",
             "shi",
-            "any-pronoun",
+            "any-pronouns",
             "ask-pronouns",
             "switch-pronouns",
             "no-pronouns",
@@ -823,6 +836,9 @@
             "unlabeled"
         ]
     },
+    "cmd_can_add_roles": [
+
+    ],
     "opt_channels": [
         "passing-advice",
         "selfies",
@@ -887,5 +903,6 @@
                       "Leaking government documents", "Starting a revolution", "Creating a time machine",
                       "Dropping a glass of water", "Cleaning your room", "Adopting 25 goldfish",
                       "Betrayal against Transpeak", "Playing Pokemon GO"]
-    }
+    },
+    "appeal_message": "'You have been removed from Transpeak. Should you wish to appeal this ban, please read the information below and follow the guidelines.\nAn appeal can be granted for two reasons: (1) You feel your ban was unjustified; (2) You feel you have reformed and are able to take place on the server once again.\nIf you are requesting an appeal because you feel your ban was unjustified, you may make your request immediately. However, if you are requesting an appeal due to reformation you will be required to wait at least six months before the appeal will be looked at.\nYou may only send in one reform appeal, and one unjust appeal. If both of these get denied, you are not eligible for any future appeals.\nPlease note that if you have previously been unbanned due to a reformation appeal and now have been banned again, ***you may not appeal your ban again.***\nTo request an appeal join the following server and follow the instructions found in #welcome: https://discord.gg/SWFufu7cp2"
 }

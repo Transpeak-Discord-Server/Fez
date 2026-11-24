@@ -302,6 +302,11 @@
         "new": 215589946218643457,
         "timeout": 332937538648014848,
         "musicbot": 267884724725350400,
+        "she": 123586900337491968,
+        "he": 123586832549150720,
+        "they": 123587145486172160,
+        "xe": 293495668339900416,
+        "ze": 178287656252342274,
         "ae": 789703319198367754,
         "xey": 843138911202836530,
         "it": 452308189036150804,
@@ -311,6 +316,7 @@
         "ne": 911448562863325204,
         "shi": 1208538507673600030,
         "ask-pronouns": 538562048913702912,
+        "any-pronouns": 293496037178343434,
         "no-pronouns": 639609854985764884,
         "switch-pronouns": 579561477086773248,
         "mirrored-pronouns": 1043983647256100925,
@@ -318,6 +324,10 @@
         "not-she": 483331841923874826,
         "not-they": 508496598309797908,
         "ask-gender": 789703360897875989,
+        "female": 119364439244800000,
+        "male": 119364552403058688,
+        "trans-guy": 390245807481290783,
+        "androgyne": 381488902369968128,
         "nonbinary": 123539518786633729,
         "agender": 155389338341867520,
         "aporagender": 555881382933561375,
@@ -374,6 +384,9 @@
         "boygirl": 1200118561516036166,
         "man": 1099431164676153466,
         "woman": 1099431360806015076,
+        "questioning": 119364714781212674,
+        "undisclosed": 176823059725025281,
+        "unlabeled": 1387519150775078932,
         "afab": 388893872127737867,
         "amab": 395652766451761154,
         "gnc": 789703449653674034,
@@ -794,7 +807,7 @@
             "xey",
             "ne",
             "shi",
-            "any-pronoun",
+            "any-pronouns",
             "ask-pronouns",
             "switch-pronouns",
             "no-pronouns",
@@ -849,7 +862,9 @@
         "philosophy",
         "sports-fitness"
     ],
-
+    "cmd_can_add_roles": [
+        
+    ],
     "ZOEY_DATA": {
         "ZOEY_JOB_TITLES": ["Bakery", "Undercover Operation", "Blacksmithing Store", "Mental Health Institution",
                            "Designer Brand", "Coaching Program", "Writing Team", "IT Team", "Acting School",
@@ -892,6 +907,6 @@
                       "Dropping a glass of water", "Cleaning your room", "Adopting 25 goldfish",
                       "Betrayal against Transpeak", "Playing Pokemon GO"]
     },
-    "APPEAL_MESSAGE": "'You have been removed from Transpeak. Should you wish to appeal this ban, please read the information below and follow the guidelines.\nAn appeal can be granted for two reasons: (1) You feel your ban was unjustified; (2) You feel you have reformed and are able to take place on the server once again.\nIf you are requesting an appeal because you feel your ban was unjustified, you may make your request immediately. However, if you are requesting an appeal due to reformation you will be required to wait at least six months before the appeal will be looked at.\nYou may only send in one reform appeal, and one unjust appeal. If both of these get denied, you are not eligible for any future appeals.\nPlease note that if you have previously been unbanned due to a reformation appeal and now have been banned again, ***you may not appeal your ban again.***\nTo request an appeal join the following server and follow the instructions found in #welcome: https://discord.gg/SWFufu7cp2"
+    "appeal_message": "'You have been removed from Transpeak. Should you wish to appeal this ban, please read the information below and follow the guidelines.\nAn appeal can be granted for two reasons: (1) You feel your ban was unjustified; (2) You feel you have reformed and are able to take place on the server once again.\nIf you are requesting an appeal because you feel your ban was unjustified, you may make your request immediately. However, if you are requesting an appeal due to reformation you will be required to wait at least six months before the appeal will be looked at.\nYou may only send in one reform appeal, and one unjust appeal. If both of these get denied, you are not eligible for any future appeals.\nPlease note that if you have previously been unbanned due to a reformation appeal and now have been banned again, ***you may not appeal your ban again.***\nTo request an appeal join the following server and follow the instructions found in #welcome: https://discord.gg/SWFufu7cp2"
 
 }
