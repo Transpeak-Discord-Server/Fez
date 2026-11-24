@@ -108,7 +108,11 @@ class MessageCount(commands.GroupCog):
             user = await get_member_or_user(server, self.bot, user_data.id)
             if not user: user_name = "Unknown"
             else: user_name = user.display_name
-            top_10_msg += f"**{user_name}**: {user_data.message_count}\n"
+            if user == interaction.user:
+                its_you = " **<--- You**"
+            else:
+                its_you = ""
+            top_10_msg += f"{user_name}: {user_data.message_count}{its_you}\n"
 
         await interaction.followup.send(top_10_msg)
 
@@ -132,7 +136,9 @@ class MessageCount(commands.GroupCog):
                 user_name = "Unknown"
             else:
                 user_name = user.display_name
-            top_10_msg += f"**{user_name}**: {user_data.count}\n"
+            if user == interaction.user: its_you = " **<--- You**"
+            else: its_you = ""
+            top_10_msg += f"{user_name}: {user_data.count}{its_you}\n"
 
         await interaction.followup.send(top_10_msg)
 

@@ -45,12 +45,12 @@ class Roles(app_commands.Group):
 
         for role_name in roles_split:
             if role_name not in self.identity_roles and role_name not in self.other_roles:
-                could_not_add += role_name
+                could_not_add.append(role_name)
                 continue
 
-            role = server.get_role(config['rl_id'].get('rl_name'))
+            role = server.get_role(config['rl_id'].get(role_name))
             if role is None:
-                could_not_add += role_name
+                could_not_add.append(role_name)
                 continue
 
             roles_to_add.append(role)
@@ -77,7 +77,7 @@ class Roles(app_commands.Group):
         await user.add_roles(*roles_to_add,
                              reason=f"/roles add_roles used by {issuer.display_name} ({issuer.id})")
         await interaction.response.send_message(
-            f"Roles added to {user.display_name}.{f" Could not add: {", ".join(could_not_add)}"}")
+            f"Roles added to {user.display_name}.{f" Could not add: {", ".join(could_not_add)}"  if len(could_not_add) != 0 else ""}")
 
     def get_user_roles(self, user: discord.Member) -> list[discord.Role]:
         roles: list[discord.Role] = []
@@ -111,7 +111,7 @@ class Roles(app_commands.Group):
         roles_to_remove, could_not_find = self.get_discord_roles(roles, server)
 
         await user.remove_roles(*roles_to_remove, reason=f"/roles remove used by {issuer.display_name} ({issuer.id})")
-        await interaction.response.send_message(f"Roles removed from {user.display_name}.{f"Could not add: {", ".join(could_not_find)}"}")
+        await interaction.response.send_message(f"Roles removed from {user.display_name}.{f"Could not add: {", ".join(could_not_find)}"  if len(could_not_find) != 0 else ""}")
 
     @app_commands.command()
     @app_commands.describe(roles='The roles to set, separated by spaces and/or commas.')
@@ -132,7 +132,7 @@ class Roles(app_commands.Group):
         await user.add_roles(*roles_to_add,
                              reason=f"/roles add_roles used by {issuer.display_name} ({issuer.id})")
         await interaction.response.send_message(
-            f"Roles added to {user.display_name}.{f" Could not add: {", ".join(could_not_add)}"}")
+            f"Roles added to {user.display_name}.{f" Could not add: {", ".join(could_not_add)}" if len(could_not_add) != 0 else ""}")
 
     @app_commands.command()
     @permission_check(Level.STAFF)
@@ -154,3 +154,6 @@ class Roles(app_commands.Group):
 
         await interaction.response.send_message(f"**{user.display_name}'s saved roles:**\n"
                                                 f"{", ".join([role.name for role in roles])}")
+
+async def setup(bot: commands.Bot) -> None:
+    bot.tree.add_command(Roles(bot))

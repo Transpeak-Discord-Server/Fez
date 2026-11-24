@@ -68,4 +68,3 @@ class ManageExtensions(app_commands.Group):
 
 async def setup(bot: commands.Bot) -> None:
     bot.tree.add_command(ManageExtensions(bot))
-    await bot.tree.sync()
