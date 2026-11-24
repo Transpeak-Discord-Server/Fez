@@ -9,7 +9,7 @@ from shared.config import Config
 from shared.database.RoleDAO import RoleDAO
 from shared.database.__main__ import get_database
 from shared.utils.misc import require_server
-from shared.utils.permissions import permission_check, Level
+from shared.utils.permissions import permission_check, Level, has_permission
 
 config = Config.json_config
 database = get_database()
@@ -24,6 +24,10 @@ async def add_timeout(user: discord.Member, server: discord.Guild, interaction: 
     timeout_channel_name = f'timeout-{user.id}'
     timeout_role = server.get_role(timeout_role_id)
     timeout_category = server.get_channel(timeout_category_id)
+
+    if has_permission(user, Level.STAFF):
+        await interaction.followup.send("No.")
+        return
 
     if not timeout_role:
         raise ValueError("Could not get timeout role from config ID")
