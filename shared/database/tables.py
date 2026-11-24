@@ -106,7 +106,7 @@ class OptinBan(Base):
     __tablename__ = 'optin_ban'
     metadata = metadata
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('user.id'), primary_key=True)
-    channel_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    channel_name: Mapped[str] = mapped_column(String, primary_key=True)
 
 class ImageRestricted(Base):
     __tablename__ = 'image_restricted'
