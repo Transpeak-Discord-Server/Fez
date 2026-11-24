@@ -80,12 +80,12 @@ async def send_appeal(user: discord.Member) -> bool:
 
 async def handle_appeal(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, should_send_appeal: bool | None) -> bool:
     if isinstance(user, discord.User):
-        await interaction.response.send_message("Appeal message not sent, user is not in the server. User has not been banned.")
+        await interaction.followup.send("Appeal message not sent, user is not in the server. User has not been banned.")
         return False
 
     if should_send_appeal:
         success = await send_appeal(user)
-        if not success: await interaction.response.send_message("Appeal message failed to send. User has not been banned.")
+        if not success: await interaction.followup.send("Appeal message failed to send. User has not been banned.")
         return success
 
     one_day = datetime.timedelta(days=1)
@@ -102,17 +102,17 @@ async def handle_appeal(interaction: discord.Interaction[commands.Bot], user: di
     if time_since_join >= one_day and message_count >= 50:
         success = await send_appeal(user)
         if success:
-            await interaction.response.send_message("Appeal message sent")
+            await interaction.followup.send("Appeal message sent")
         else:
-            await interaction.response.send_message("Appeal message failed to send. User has not been banned.")
+            await interaction.followup.send("Appeal message failed to send. User has not been banned.")
         return success
 
     if time_since_join < one_day and message_count < 50:
-        await interaction.response.send_message("Appeal message not sent. User has been in the server for less than a day and has less than 50 messages.")
+        await interaction.followup.send("Appeal message not sent. User has been in the server for less than a day and has less than 50 messages.")
     elif time_since_join < one_day:
-        await interaction.response.send_message("Appeal message not sent. User has sent 50 messages, but has not been in the server for more than a day.")
+        await interaction.followup.send("Appeal message not sent. User has sent 50 messages, but has not been in the server for more than a day.")
     else:
-        await interaction.response.send_message("Appeal message not sent. User has been in the server for over a day, but has not sent 50 messages.")
+        await interaction.followup.send("Appeal message not sent. User has been in the server for over a day, but has not sent 50 messages.")
 
     return True
 
@@ -144,7 +144,7 @@ async def ban(interaction: discord.Interaction[commands.Bot], user: discord.User
     if server is None: return None
 
     if isinstance(user, discord.Member) and has_permission(user, Level.STAFF):
-        await interaction.response.send_message("No.")
+        await interaction.followup.send("No.")
         return None
 
     if send_ban_appeal is None or send_ban_appeal:

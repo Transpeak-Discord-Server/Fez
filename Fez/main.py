@@ -44,6 +44,8 @@ class Fez(commands.Bot):
         'extensions.user',
         'extensions.message_count',
         'extensions.timeout',
+        'extensions.mentionfind',
+        'extensions.channel',
         'extensions.mentionfind'
     ]
 

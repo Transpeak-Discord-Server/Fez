@@ -1,10 +1,12 @@
 import datetime
 
-from sqlalchemy import select, insert, update, delete
+from sqlalchemy import select, update, delete
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.database import data, tables
 from shared.database.tables import User, Watchlist
+from shared.utils.misc import get_week
 
 MISSING = sentinel("MISSING")
 
@@ -66,12 +68,32 @@ class UserDAO:
     async def ensure_user(self, user_id: int) -> None:
         await self.new_user(user_id)
 
-    async def increment_message_count(self, user_id: int, *, step: int = 1) -> data.User:
+    async def get_message_count_week(self, user_id: int, week: int | None = None) -> int:
+        if week is None: week = get_week()
+        msg_week_select = select(tables.MessageCountWeek).where(tables.MessageCountWeek.user_id == user_id).where(
+            tables.MessageCountWeek.week == week)
+        result = (await self.session.execute(msg_week_select)).scalar()
+        if result is None: return 0
+        return result.count
+
+    async def set_message_count_week(self, user_id: int, count: int, week: int | None = None) -> data.MessageCountWeek:
+        if week is None: week = get_week()
+        msg_week_insert = insert(tables.MessageCountWeek).values(user_id=user_id, week=week, count=count)
+        returning_msg_week_insert = msg_week_insert.on_conflict_do_update(
+            index_elements=[tables.MessageCountWeek.user_id, tables.MessageCountWeek.week],
+            set_=dict(count=count)
+        ).returning(tables.MessageCountWeek)
+        result = (await self.session.execute(returning_msg_week_insert)).scalar_one()
+        return data.MessageCountWeek(result.user_id, result.week, result.count)
+
+    async def increment_message_count(self, user_id: int, *, step: int = 1, week: int | None = None) -> data.User:
         user = await self.get_user_info(user_id)
         if user is None:
             user = await self.new_user(user_id, message_count=step)
+            await self.set_message_count_week(user_id, await self.get_message_count_week(user_id, week) + 1)
             return user
 
+        await self.set_message_count_week(user_id, await self.get_message_count_week(user_id, week) + 1)
         return await self.set_message_count(user_id, user.message_count + step)
 
     async def set_message_count(self, user_id: int, count: int) -> data.User:
