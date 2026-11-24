@@ -1,11 +1,12 @@
 import discord
-from discord import app_commands
+from discord import app_commands, ForumChannel
 from discord.ext import commands
 
 from shared.config import Config
+from shared.database.MessageCountDAO import MessageCountDAO
 from shared.database.UserDAO import UserDAO
 from shared.database.__main__ import Database, get_database
-from shared.utils.misc import require_server
+from shared.utils.misc import require_server, get_member_or_user
 from shared.utils.permissions import permission_check, Level, has_permission
 
 config = Config.json_config
@@ -49,6 +50,30 @@ class MessageCount(commands.GroupCog):
         return None
 
     @app_commands.command()
+    @permission_check(Level.REGISTERED)
+    async def week(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member | None = None) -> None:
+        server = await require_server(interaction)
+        if server is None: return None
+
+        interaction_user = interaction.user
+        if isinstance(interaction_user, discord.User):
+            await interaction.response.send_message("Something went wrong. Please try again.")
+            return None
+
+        if user is not None and not has_permission(interaction_user, Level.STAFF):
+            await interaction.response.send_message("You do not have permission to get the message counts of other users.")
+            return None
+
+        if user is None: user = interaction_user
+
+        async with self.database.get_session() as session:
+            user_dao = UserDAO(session)
+            user_info = await user_dao.get_message_count_week(user.id)
+
+        await interaction.response.send_message(f"**{user.display_name}'s message count for this week:** {user_info}")
+        return None
+
+    @app_commands.command()
     @permission_check(Level.LEAD)
     async def set(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, count: int) -> None:
         async with self.database.get_session() as session:
@@ -65,13 +90,59 @@ class MessageCount(commands.GroupCog):
         self.ignore_messages_role = ignore_messages_role
         return ignore_messages_role
 
+    @app_commands.command()
+    @permission_check(Level.REGISTERED)
+    async def top_10(self, interaction: discord.Interaction[commands.Bot]) -> None:
+        server = await require_server(interaction)
+        if not server: return
+
+        await interaction.response.defer(thinking=True)
+
+        async with self.database.get_session() as session:
+            msg_count_dao = MessageCountDAO(session)
+            top_10_users = await msg_count_dao.get_top_10()
+
+        top_10_msg = f"**Top 10 users by message count:**\n"
+
+        for user_data in top_10_users:
+            user = await get_member_or_user(server, self.bot, user_data.id)
+            if not user: user_name = "Unknown"
+            else: user_name = user.display_name
+            top_10_msg += f"**{user_name}**: {user_data.message_count}\n"
+
+        await interaction.followup.send(top_10_msg)
+
+    @app_commands.command()
+    @permission_check(Level.REGISTERED)
+    async def top_10_week(self, interaction: discord.Interaction[commands.Bot]) -> None:
+        server = await require_server(interaction)
+        if not server: return
+
+        await interaction.response.defer(thinking=True)
+
+        async with self.database.get_session() as session:
+            msg_count_dao = MessageCountDAO(session)
+            top_10_users = await msg_count_dao.get_top_10_week()
+
+        top_10_msg = f"**Top 10 users by message count this week:**\n"
+
+        for user_data in top_10_users:
+            user = await get_member_or_user(server, self.bot, user_data.user_id)
+            if not user:
+                user_name = "Unknown"
+            else:
+                user_name = user.display_name
+            top_10_msg += f"**{user_name}**: {user_data.count}\n"
+
+        await interaction.followup.send(top_10_msg)
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
         server = message.guild
         if server is None: return
 
         channel = message.channel
-        if isinstance(channel, discord.DMChannel | discord.GroupChannel): return
+        if isinstance(channel, discord.DMChannel | discord.GroupChannel | discord.PartialMessageable): return
 
         if message.author.bot:
             return
@@ -84,18 +155,26 @@ class MessageCount(commands.GroupCog):
             if config['ch_id'][ignored_channel] == channel.id:
                 return
 
+        permission_channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel | ForumChannel
         if isinstance(channel, discord.Thread):
-            parent_channel = channel.parent
-            if parent_channel is None: return
-            channel = parent_channel
+            permission_channel_ = channel.parent
+            if permission_channel_ is None: return
+            permission_channel = permission_channel_
+        else:
+            permission_channel = channel
 
         ignore_messages_role = self.get_ignore_messages_role(server)
-        ignore_overwrites = channel.overwrites_for(ignore_messages_role)
+        ignore_overwrites = permission_channel.overwrites_for(ignore_messages_role)
         if not ignore_overwrites.is_empty(): return
 
         async with self.database.get_session() as session:
             user_dao = UserDAO(session)
-            await user_dao.increment_message_count(message.author.id)
+            user_info = await user_dao.increment_message_count(message.author.id)
+
+        if user_info.message_count % 1000 == 0 and isinstance(channel, discord.TextChannel | discord.VoiceChannel):
+            await channel.send(f"**:trophy: {message.author.display_name} has reached {user_info.message_count} messages!**")
+
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(MessageCount(bot))

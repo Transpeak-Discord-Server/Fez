@@ -14,6 +14,11 @@ class User:
     last_seen: Optional[datetime]
     last_message: Optional[str]
 
+@dataclass
+class MessageCountWeek:
+    user_id: int
+    week: int
+    count: int
 
 class BanType(Enum):
     Permanent = "permanent"
