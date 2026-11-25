@@ -46,7 +46,8 @@ class Fez(commands.Bot):
         'extensions.timeout',
         'extensions.mentionfind',
         'extensions.channel',
-        'extensions.roles'
+        'extensions.roles',
+        'extensions.registration'
     ]
 
     async def setup_hook(self) -> None:
