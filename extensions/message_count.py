@@ -155,7 +155,7 @@ class MessageCount(commands.GroupCog):
 
         author = message.author
         if isinstance(author, discord.Member) and author.joined_at is not None and new_role in author.roles:
-            time_since_join = datetime.datetime.now() - author.joined_at
+            time_since_join = datetime.datetime.now(tz=datetime.timezone.utc) - author.joined_at
             if user_info.message_count >= 500 and time_since_join > datetime.timedelta(days=1):
                 await author.remove_roles(new_role)
                 await author.add_roles(regular_role)
