@@ -2,9 +2,9 @@ discord.py==2.7.1
 python-dotenv==1.2.4
 pytz==2026.6
 mypy==2.4.1
-types-pytz==2026.6.0.20261031
+types-pytz==2026.6.0.20261122
 aiosqlite==0.22.1
 psycopg==3.3.9
 psycopg-pool==3.3.3
-sqlalchemy==2.1.8
-sqlalchemy[asyncio]==2.1.8
+sqlalchemy==2.1.9
+sqlalchemy[asyncio]==2.1.9
