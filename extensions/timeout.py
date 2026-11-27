@@ -1,13 +1,29 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 from pathlib import Path
 
 import discord
 from discord import app_commands
-from discord.ext import commands
 
 from shared.config import Config
 from shared.database.RoleDAO import RoleDAO
 from shared.database.__main__ import get_database
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import require_server
 from shared.utils.permissions import permission_check, Level, has_permission
 
@@ -20,7 +36,7 @@ timeout_role_id: int = config['rl_id']['timeout']
 timeout_msg: str
 
 
-async def add_timeout(user: discord.Member, server: discord.Guild, interaction: discord.Interaction[commands.Bot]) -> None:
+async def add_timeout(user: discord.Member, server: discord.Guild, interaction: discord.Interaction[TranspeakBot]) -> None:
     timeout_channel_name = f'timeout-{user.id}'
     timeout_role = server.get_role(timeout_role_id)
     timeout_category = server.get_channel(timeout_category_id)
@@ -87,7 +103,7 @@ def find_timeout_channel(user: discord.Member, server: discord.Guild) -> discord
             return channel
     return None
 
-async def remove_timeout(user: discord.Member, server: discord.Guild, interaction: discord.Interaction[commands.Bot]) -> None:
+async def remove_timeout(user: discord.Member, server: discord.Guild, interaction: discord.Interaction[TranspeakBot]) -> None:
     timeout_role = server.get_role(timeout_role_id)
     if not timeout_role:
         raise ValueError("Could not get timeout role from config ID")
@@ -126,7 +142,7 @@ async def remove_timeout(user: discord.Member, server: discord.Guild, interactio
 
 @app_commands.command()
 @permission_check(Level.HELPER)
-async def timeout(interaction: discord.Interaction[commands.Bot], user: discord.Member) -> None:
+async def timeout(interaction: discord.Interaction[TranspeakBot], user: discord.Member) -> None:
     server = await require_server(interaction)
     if not server: return
 
@@ -142,7 +158,7 @@ async def timeout(interaction: discord.Interaction[commands.Bot], user: discord.
 
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     bot.tree.add_command(timeout)
 
     global timeout_msg
