@@ -20,9 +20,8 @@ from typing import Iterable, Protocol, Any
 
 import discord
 from discord import Member, User
-from discord.ext import commands
 
-from shared.utils.permissions import UserPermissionsError, Level
+from shared.utils.errors import NotInServerError
 
 def __init__():
     pass
@@ -64,38 +63,11 @@ def format_time(time: Any, time_format: str = "t") -> str:
 def _(time: datetime, time_format: str = "t") -> str:
     return format_time(int(time.timestamp()), time_format)
 
-# Handle error
-
-async def permission_error(context: commands.Context[Any] | discord.Interaction[Any], error: UserPermissionsError) -> None:
-    if error.required_perms == Level.REGISTERED:
-        msg = "You need to be registered to do that! Please ping a staff member for help."
-    else:
-        msg = f"You need to be a {error.required_perms} to do that!"
-
-    if isinstance(context, discord.Interaction):
-        await context.response.send_message(msg)
-        return
-    await context.reply(msg)
-
-
-async def tree_error(interaction: discord.Interaction[Any], error: Exception) -> None:
-    if isinstance(error, UserPermissionsError):
-        await permission_error(interaction, error)
-    print(error)
-
-async def shared_error(ctx: commands.Context[Any], error: Exception) -> None:
-    if isinstance(error, commands.CommandNotFound):
-        return None
-    if isinstance(error, UserPermissionsError):
-        await permission_error(ctx, error)
-    print(error)
-    return None
-
-async def require_server(interaction: discord.Interaction[Any]) -> discord.Guild | None:
-    if interaction.guild is None:
-        await interaction.response.send_message("This command can only be used within Transpeak.")
-        return None
-    return interaction.guild
+async def require_server(interaction: discord.Interaction[Any]) -> discord.Guild:
+    guild = interaction.guild
+    if guild is None:
+        raise NotInServerError()
+    return guild
 
 # other
 

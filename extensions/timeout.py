@@ -148,7 +148,6 @@ class Timeout(commands.Cog):
     @permission_check(Level.HELPER)
     async def timeout(self, interaction: discord.Interaction[TranspeakBot], user: discord.Member) -> None:
         server = await require_server(interaction)
-        if not server: return
 
         # This command can take a while, so let Discord know we got it and are working on it
         await interaction.response.defer(thinking=True)

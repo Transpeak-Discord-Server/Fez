@@ -39,9 +39,6 @@ class Channel(app_commands.Group):
     @app_commands.command()
     @permission_check(Level.STAFF)
     async def slow_mode(self, interaction: discord.Interaction[TranspeakBot], delay: int | None = None) -> None:
-        server = await require_server(interaction)
-        if not server: return
-
         channel = interaction.channel
         if not isinstance(channel, discord.TextChannel | discord.Thread | discord.VoiceChannel):
             await interaction.response.send_message("Cannot set slow mode in this channel!")
@@ -134,7 +131,6 @@ class Channel(app_commands.Group):
     @permission_check(Level.STAFF)
     async def staff_only(self, interaction: discord.Interaction[TranspeakBot], channel: discord.TextChannel | discord.VoiceChannel | None = None) -> None:
         server = await require_server(interaction)
-        if not server: return
 
         if channel is None:
             interaction_channel = interaction.channel

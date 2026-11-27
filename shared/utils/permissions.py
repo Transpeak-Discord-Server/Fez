@@ -20,7 +20,8 @@ import discord
 from discord import Member, app_commands
 import os
 
-from shared.utils import misc
+from shared.utils.errors import UserPermissionsError
+from shared.utils.misc import get_ids, get_member_if_exists
 
 CURRENT_PATH = os.path.dirname(__file__)
 from shared.config import Config
@@ -66,14 +67,8 @@ class PermissionManager:
         return cls._MAPPING.get(level, [])
 
 
-class UserPermissionsError(app_commands.CheckFailure):
-    def __init__(self, required_perms: Level):
-        self.required_perms = required_perms
-        super().__init__(f"User tried to use a command for {required_perms.name}")
-
-
 def has_permission(member: Member, permission_level: Level) -> bool:
-    user_roles = set(misc.get_ids(member.roles))
+    user_roles = set(get_ids(member.roles))
     staff_roles = set(PermissionManager.get_roles(permission_level))
     return not user_roles.isdisjoint(staff_roles)
 
@@ -81,7 +76,7 @@ def permission_check(permission_level: Level) -> Callable[[Callable[..., Any]], 
     async def predicate(interaction: discord.Interaction[Any]) -> bool:
         member = interaction.user
         if isinstance(member, discord.User) and interaction.guild is None:
-            member = await misc.get_member_if_exists(interaction.client.get_guild(bot_config['server_id']), member.id)
+            member = await get_member_if_exists(interaction.client.get_guild(bot_config['server_id']), member.id)
         if isinstance(member, discord.Member) and has_permission(member, permission_level):
             return True
         raise UserPermissionsError(permission_level)

@@ -23,7 +23,7 @@ from discord.ext import commands
 
 from shared.config import Config
 from shared.database.__main__ import get_database
-from shared.utils.misc import tree_error, shared_error
+from shared.utils.errors import tree_error, command_error
 
 
 class TranspeakBotTree(app_commands.CommandTree):
@@ -58,4 +58,4 @@ class TranspeakBot(commands.Bot):
         print(f'{self.user} has finished booting.')
 
     async def on_command_error(self, ctx: commands.Context[Any], error: Exception) -> None:
-        await shared_error(ctx, error)
+        await command_error(ctx, error)

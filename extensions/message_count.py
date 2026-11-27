@@ -39,7 +39,6 @@ class MessageCount(commands.GroupCog):
     @permission_check(Level.REGISTERED)
     async def get(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member | None = None) -> None:
         server = await require_server(interaction)
-        if server is None: return None
 
         interaction_user = interaction.user
         if isinstance(interaction_user, discord.User):
@@ -67,7 +66,6 @@ class MessageCount(commands.GroupCog):
     @permission_check(Level.REGISTERED)
     async def week(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member | None = None) -> None:
         server = await require_server(interaction)
-        if server is None: return None
 
         interaction_user = interaction.user
         if isinstance(interaction_user, discord.User):
@@ -108,7 +106,6 @@ class MessageCount(commands.GroupCog):
     @permission_check(Level.REGISTERED)
     async def top_10(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         server = await require_server(interaction)
-        if not server: return
 
         await interaction.response.defer(thinking=True)
 
@@ -134,7 +131,6 @@ class MessageCount(commands.GroupCog):
     @permission_check(Level.REGISTERED)
     async def top_10_week(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         server = await require_server(interaction)
-        if not server: return
 
         await interaction.response.defer(thinking=True)
 
