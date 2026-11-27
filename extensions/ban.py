@@ -152,7 +152,6 @@ class Ban(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         server = await require_server(interaction)
-        if server is None: return None
 
         if isinstance(user, discord.Member) and has_permission(user, Level.STAFF):
             await interaction.followup.send("No.")
@@ -188,14 +187,13 @@ class Ban(commands.Cog):
 
     ### Commands below start with /bans
 
-    bans = app_commands.Group()
+    bans = app_commands.Group(name="bans", description="Commands relating to bans (not including /ban or /unban)")
 
 
     @bans.command()
     @permission_check(Level.STAFF)
     async def get(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member) -> None:
         server = await require_server(interaction)
-        if server is None: return
 
         async with self.bot.database.get_session() as session:
             ban_dao = BanDAO(session)
@@ -225,7 +223,6 @@ class Ban(commands.Cog):
     @permission_check(Level.STAFF)
     async def edit(self, interaction: discord.Interaction[TranspeakBot], ban_id: int, reason: str) -> None:
         server = await require_server(interaction)
-        if not server: return
         try:
             async with self.bot.database.get_session() as session:
                 ban_dao = BanDAO(session)

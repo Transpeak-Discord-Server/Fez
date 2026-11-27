@@ -74,7 +74,6 @@ class Roles(app_commands.Group):
     @permission_check(Level.REGISTERED)
     async def add(self, interaction: discord.Interaction[TranspeakBot], roles: str, user: discord.Member | None = None) -> None:
         server = await require_server(interaction)
-        if server is None: return
 
         await interaction.response.defer(thinking=True)
 
@@ -115,7 +114,6 @@ class Roles(app_commands.Group):
     @permission_check(Level.REGISTERED)
     async def remove(self, interaction: discord.Interaction[TranspeakBot], roles: str, user: discord.Member | None = None) -> None:
         server = await require_server(interaction)
-        if server is None: return
 
         await interaction.response.defer(thinking=True)
 
@@ -138,7 +136,6 @@ class Roles(app_commands.Group):
     @permission_check(Level.STAFF)
     async def set(self, interaction: discord.Interaction[TranspeakBot], roles: str, user: discord.Member | None = None) -> None:
         server = await require_server(interaction)
-        if server is None: return
         issuer = interaction.user
         assert isinstance(issuer, discord.Member)
 
@@ -172,8 +169,6 @@ class Roles(app_commands.Group):
     @permission_check(Level.STAFF)
     async def saved(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member | None) -> None:
         server = await require_server(interaction)
-        if server is None: return
-
         issuer = interaction.user
         assert isinstance(issuer, discord.Member)
         if user is None: user = issuer

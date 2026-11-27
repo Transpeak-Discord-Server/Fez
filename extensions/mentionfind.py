@@ -18,13 +18,15 @@ import discord
 from discord import app_commands
 
 from shared.transpeak_bot import TranspeakBot
+from shared.utils.misc import require_server
 from shared.utils.permissions import permission_check, Level
 
 @app_commands.command()
 @permission_check(Level.STAFF)
 async def mentionfind(interaction: discord.Interaction[TranspeakBot], search_term: str) -> None:
+    server = await require_server(interaction)
     query = search_term.strip().lower()
-    results = ['{} {}#{}'.format(x.mention, x.name if x.nick is None else f'{x.nick} *aka {x.name}*', x.discriminator) for x in interaction.guild.members if query in (x.name+'\u200b'+x.display_name+'\u200b'+x.discriminator).lower()]
+    results = ['{} {}#{}'.format(x.mention, x.name if x.nick is None else f'{x.nick} *aka {x.name}*', x.discriminator) for x in server.members if query in (x.name+'\u200b'+x.display_name+'\u200b'+x.discriminator).lower()]
 
     if not results:
         await interaction.response.send_message("No results found", ephemeral=True)
