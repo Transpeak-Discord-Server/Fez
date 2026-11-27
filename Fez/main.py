@@ -13,25 +13,22 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 from typing import Any
 
 import discord
 import os
 from pathlib import Path
-
-from discord import app_commands, Interaction
-from discord.app_commands import AppCommandError
-from discord.ext import commands
 from dotenv import load_dotenv
 
-from shared.utils.misc import shared_error, tree_error
+from shared.transpeak_bot import TranspeakBot
 
-class FezTree(app_commands.CommandTree):
-    async def on_error(self, interaction: Interaction[Any], error: AppCommandError, /) -> None:
-        await tree_error(interaction, error)
+class Fez(TranspeakBot):
+    def __init__(self, bot_extensions: list[str], intents: discord.Intents, **kwargs: Any):
+        super().__init__(bot_extensions, intents, **kwargs)
 
-class Fez(commands.Bot):
+class Main:
+
+    FEZ_DIR = Path(__file__).resolve().parent
 
     bot_extensions = [
         'extensions.staff_commands',
@@ -49,33 +46,10 @@ class Fez(commands.Bot):
         'extensions.roles'
     ]
 
-    async def setup_hook(self) -> None:
-        for extension in self.bot_extensions:
-            try:
-                await self.load_extension(extension, package=__package__)
-                print(f"Loaded extension: {extension}")
-            except commands.ExtensionError as e:
-                print(f"Failed to load extension {extension}: {e}")
-        print("Syncing...")
-        await self.tree.sync()
-        print("Successfully synced!")
-
-
-    async def on_ready(self) -> None:
-        print(f'{self.user} has finished booting.')
-
-    async def on_command_error(self, ctx: commands.Context[Any], error: Exception) -> None:
-        await shared_error(ctx, error)
-
-
-
-class Main:
-    FEZ_DIR = Path(__file__).resolve().parent
+    intents = discord.Intents.all()
 
     def run(self) -> None:
         load_dotenv(dotenv_path=self.FEZ_DIR / '..' / '.env')
-
-        intents = discord.Intents.all()
 
         token = os.getenv("FEZ_TOKEN")
         if not token:
@@ -83,7 +57,7 @@ class Main:
 
         discord.utils.setup_logging()
 
-        client = Fez(intents=intents, command_prefix='!', tree_cls=FezTree, help_command=None)
+        client = Fez(self.bot_extensions, self.intents, help_command=None)
         client.run(token)
 
 if __name__ == "__main__":

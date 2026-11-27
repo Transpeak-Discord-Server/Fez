@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import discord
 from dataclasses import dataclass
 from discord import TextChannel, DMChannel, GroupChannel
@@ -5,6 +21,7 @@ from discord.abc import GuildChannel
 from discord.ext import commands
 
 from shared.config import Config
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.errors import ConfigError
 from shared.utils.user_info import is_on_wl
 import os
@@ -43,7 +60,7 @@ class MessageLogging(commands.Cog):
         colour=discord.Colour.red()
     )
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: TranspeakBot) -> None:
         self.bot_dms: TextChannel | None = None
         self.unified_nsfw: TextChannel | None = None
         self.unified_sfw: TextChannel | None = None
@@ -141,5 +158,5 @@ class MessageLogging(commands.Cog):
         if not isinstance(message.channel, DMChannel | GroupChannel): return
         await self.log(message, self.ON_MESSAGE_DETAILS.title, self.ON_MESSAGE_DETAILS.colour, message.content)
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     await bot.add_cog(MessageLogging(bot))

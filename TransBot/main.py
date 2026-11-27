@@ -17,44 +17,29 @@
 from typing import List, Any
 
 import discord
-from discord.ext import commands
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-from shared.utils.misc import shared_error
+from shared.transpeak_bot import TranspeakBot
 
 
-class TransBot(commands.Bot):
-
-    # Extensions to be added when db support is ready:
-    # 'extensions.ban'
-
-    bot_extensions: List[str] = [
-        'extensions.manage_extensions'
-    ]
-
-    async def setup_hook(self) -> None:
-        for extension in self.bot_extensions:
-            try:
-                await self.load_extension(extension, package=__package__)
-                print(f"Loaded extension: {extension}")
-            except commands.ExtensionError as e:
-                print(f"Failed to load extension {extension}: {e}")
-
-    async def on_ready(self) -> None:
-        print(f'{self.user} has finished booting.')
-
-    async def on_command_error(self, ctx: commands.Context[Any], error: Exception) -> None:
-        await shared_error(ctx, error)
+class TransBot(TranspeakBot):
+    def __init__(self, bot_extensions: list[str], intents: discord.Intents, **kwargs: Any):
+        super().__init__(bot_extensions, intents, **kwargs)
 
 class Main:
 
     TBOT_DIR = Path(__file__).resolve().parent
 
+    bot_extensions: List[str] = [
+        'extensions.manage_extensions'
+    ]
+
+    intents = discord.Intents.all()
+
     def run(self) -> None:
         load_dotenv(dotenv_path=self.TBOT_DIR / '..' / '.env')
-        intents = discord.Intents.all()
 
         token = os.getenv("TBOT_TOKEN")
         if not token:
@@ -62,7 +47,7 @@ class Main:
 
         discord.utils.setup_logging()
 
-        client = TransBot(intents=intents, command_prefix='!')
+        client = TransBot(self.bot_extensions, self.intents, command_prefix='!', help_command=None)
         client.run(token)
 
 if __name__ == "__main__":

@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Any
 
 import discord
@@ -6,6 +22,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from shared.config import Config
+from shared.transpeak_bot import TranspeakBot
 
 config = Config.json_config
 
@@ -15,7 +32,7 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
     reports_over18_channel: ForumChannel
 
     @classmethod
-    async def ready(cls, bot: commands.Bot) -> None:
+    async def ready(cls, bot: TranspeakBot) -> None:
         reports_channel = await bot.fetch_channel(config['ch_id']['#reports'])
         if not isinstance(reports_channel, ForumChannel):
             raise ValueError("reports channel is not a forum channel")
@@ -84,7 +101,7 @@ report_button = app_commands.ContextMenu(
 
 class Report(commands.Cog):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         self.bot = bot
         self.bot.tree.add_command(report_button)
 
@@ -94,6 +111,6 @@ class Report(commands.Cog):
     def cog_check(self, ctx: Context[Any]) -> bool:
         return ctx.guild is not None
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     await bot.add_cog(Report(bot))
     return None

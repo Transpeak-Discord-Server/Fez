@@ -1,9 +1,24 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import datetime
 from pathlib import Path
 
 import discord
 from discord import app_commands
-from discord.ext import commands
 from dotenv import load_dotenv
 
 from shared.config import Config
@@ -12,6 +27,7 @@ from shared.database.BanDAO import BanDAO
 from shared.database.UserDAO import UserDAO
 from shared.database.__main__ import Database, get_database
 from shared.database.data import BanType
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import require_server, get_member_or_user, send_split_message_embeds
 from shared.utils.permissions import Level, permission_check, has_permission
 
@@ -20,7 +36,7 @@ config = Config.json_config
 env_path = Path(__file__) / ".." / ".env"
 env_file = load_dotenv(env_path)
 
-async def get_ban_embed(server: discord.Guild, bot: commands.Bot, ban_data: data.Ban) -> discord.Embed:
+async def get_ban_embed(server: discord.Guild, bot: TranspeakBot, ban_data: data.Ban) -> discord.Embed:
     ban_title: str
     colour: discord.Colour
     if ban_data.ban_type == BanType.Permanent:
@@ -56,7 +72,7 @@ async def get_ban_embed(server: discord.Guild, bot: commands.Bot, ban_data: data
 
     return ban_embed
 
-ban_bot: commands.Bot
+ban_bot: TranspeakBot
 ban_database: Database
 ban_msg_channel: discord.TextChannel | None = None
 appeal_message: str = config['appeal_message']
@@ -73,7 +89,7 @@ async def send_appeal(user: discord.Member) -> bool:
 
 
 
-async def handle_appeal(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, should_send_appeal: bool | None) -> bool:
+async def handle_appeal(interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, should_send_appeal: bool | None) -> bool:
     if isinstance(user, discord.User):
         await interaction.followup.send("Appeal message not sent, user is not in the server. User has not been banned.")
         return False
@@ -130,7 +146,7 @@ async def send_ban_message(server: discord.Guild, ban_data: data.Ban) -> None:
 
 @app_commands.command()
 @permission_check(Level.STAFF)
-async def ban(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, reason: str, delete_messages: bool = False, send_ban_appeal: bool | None = None) -> None:
+async def ban(interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, reason: str, delete_messages: bool = False, send_ban_appeal: bool | None = None) -> None:
 
     # This command can take a little while, so we tell Discord we are still doing stuff so it doesn't timeout
     await interaction.response.defer(thinking=True)
@@ -160,7 +176,7 @@ async def ban(interaction: discord.Interaction[commands.Bot], user: discord.User
 
 @app_commands.command()
 @permission_check(Level.ADMIN)
-async def unban(interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, reason: str | None) -> None:
+async def unban(interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, reason: str | None) -> None:
     server = await require_server(interaction)
     if not server: return
     try:
@@ -172,17 +188,17 @@ async def unban(interaction: discord.Interaction[commands.Bot], user: discord.Us
 
 class Bans(app_commands.Group):
 
-    bot: commands.Bot
+    bot: TranspeakBot
     database: Database
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         super().__init__()
         self.bot = bot
         self.database = get_database()
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def get(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member) -> None:
+    async def get(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member) -> None:
         server = await require_server(interaction)
         if server is None: return
 
@@ -212,7 +228,7 @@ class Bans(app_commands.Group):
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def edit(self, interaction: discord.Interaction[commands.Bot], ban_id: int, reason: str) -> None:
+    async def edit(self, interaction: discord.Interaction[TranspeakBot], ban_id: int, reason: str) -> None:
         server = await require_server(interaction)
         if not server: return
         try:
@@ -225,7 +241,7 @@ class Bans(app_commands.Group):
             await interaction.response.send_message("Ban not found.")
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     global ban_bot, ban_database
     ban_bot = bot
     ban_database = get_database()

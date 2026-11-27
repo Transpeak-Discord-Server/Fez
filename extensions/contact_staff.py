@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import dataclasses
 import io
 import textwrap
@@ -9,6 +25,7 @@ from discord import TextChannel, app_commands, DMChannel, Guild, Role, CategoryC
 from discord.ext import commands
 
 from shared.config import Config
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import get_member_or_user
 from shared.utils.permissions import permission_check, Level
 
@@ -33,7 +50,7 @@ class ContactStaff(commands.GroupCog):
     ticket_category: CategoryChannel
     ticket_log_channel: TextChannel
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         self.bot = bot
         if self.app_command is not None:
             self.app_command.name = "modmail"
@@ -141,7 +158,7 @@ class ContactStaff(commands.GroupCog):
 
     @staticmethod
     async def send_msg_sent(message: str, author: discord.User | discord.Member,
-                            send_in: discord.abc.Messageable | discord.Interaction[commands.Bot]) -> None:
+                            send_in: discord.abc.Messageable | discord.Interaction[TranspeakBot]) -> None:
         msg_embed = discord.Embed(
             title="Message Sent",
             description=message,
@@ -155,7 +172,7 @@ class ContactStaff(commands.GroupCog):
 
         await send_in.send(embed=msg_embed)
 
-    async def get_msg_details(self, interaction: discord.Interaction[commands.Bot], message: str) -> TicketMessageDetails | None:
+    async def get_msg_details(self, interaction: discord.Interaction[TranspeakBot], message: str) -> TicketMessageDetails | None:
         server = interaction.guild
         if server is None:
             await interaction.response.send_message("This command can only be used within Transpeak!")
@@ -192,7 +209,7 @@ class ContactStaff(commands.GroupCog):
 
     @app_commands.command(description="Reply to the user in a Modmail ticket")
     @permission_check(Level.STAFF)
-    async def reply(self, interaction: discord.Interaction[commands.Bot], message: str) -> None:
+    async def reply(self, interaction: discord.Interaction[TranspeakBot], message: str) -> None:
 
         ticket_details = await self.get_msg_details(interaction, message)
         if not ticket_details:
@@ -235,7 +252,7 @@ class ContactStaff(commands.GroupCog):
 
     @app_commands.command(description="Close the ticket you are in")
     @permission_check(Level.STAFF)
-    async def close(self, interaction: discord.Interaction[commands.Bot], reason: str) -> None:
+    async def close(self, interaction: discord.Interaction[TranspeakBot], reason: str) -> None:
 
         ticket_details = await self.get_msg_details(interaction, reason)
         if not ticket_details:
@@ -283,6 +300,6 @@ class ContactStaff(commands.GroupCog):
 
         return None
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     await bot.add_cog(ContactStaff(bot))
     return None

@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import datetime
 
 import discord
@@ -9,6 +25,7 @@ from shared.database import data
 from shared.database.MessageCountDAO import MessageCountDAO
 from shared.database.UserDAO import UserDAO
 from shared.database.__main__ import Database, get_database
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import require_server, get_member_or_user
 from shared.utils.permissions import permission_check, Level, has_permission
 
@@ -16,17 +33,17 @@ config = Config.json_config
 
 class MessageCount(commands.GroupCog):
 
-    bot: commands.Bot
+    bot: TranspeakBot
     database: Database
     ignore_messages_role: discord.Role | None = None
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         self.bot = bot
         self.database = get_database()
 
     @app_commands.command()
     @permission_check(Level.REGISTERED)
-    async def get(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member | None = None) -> None:
+    async def get(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member | None = None) -> None:
         server = await require_server(interaction)
         if server is None: return None
 
@@ -54,7 +71,7 @@ class MessageCount(commands.GroupCog):
 
     @app_commands.command()
     @permission_check(Level.REGISTERED)
-    async def week(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member | None = None) -> None:
+    async def week(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member | None = None) -> None:
         server = await require_server(interaction)
         if server is None: return None
 
@@ -78,7 +95,7 @@ class MessageCount(commands.GroupCog):
 
     @app_commands.command()
     @permission_check(Level.LEAD)
-    async def set(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, count: int) -> None:
+    async def set(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, count: int) -> None:
         async with self.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.set_message_count(user.id, count)
@@ -95,7 +112,7 @@ class MessageCount(commands.GroupCog):
 
     @app_commands.command()
     @permission_check(Level.REGISTERED)
-    async def top_10(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def top_10(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         server = await require_server(interaction)
         if not server: return
 
@@ -121,7 +138,7 @@ class MessageCount(commands.GroupCog):
 
     @app_commands.command()
     @permission_check(Level.REGISTERED)
-    async def top_10_week(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def top_10_week(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         server = await require_server(interaction)
         if not server: return
 
@@ -206,5 +223,5 @@ class MessageCount(commands.GroupCog):
 
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     await bot.add_cog(MessageCount(bot))
