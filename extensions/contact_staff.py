@@ -24,12 +24,9 @@ import discord
 from discord import TextChannel, app_commands, DMChannel, Guild, Role, CategoryChannel
 from discord.ext import commands
 
-from shared.config import Config
 from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import get_member_or_user
 from shared.utils.permissions import permission_check, Level
-
-config = Config.json_config
 
 
 @dataclasses.dataclass
@@ -56,26 +53,26 @@ class ContactStaff(commands.GroupCog):
             self.app_command.name = "modmail"
 
     async def cog_load(self) -> None:
-        server = await self.bot.fetch_guild(config['server_id'])
+        server = await self.bot.fetch_guild(self.bot.config['server_id'])
         if server is None:
             raise ValueError("Could not find server from server_id in config")
         self.server = server
 
-        staff_role = self.server.get_role(config['rl_id']['staff'])
-        bot_role = self.server.get_role(config['rl_id']['/'])
-        staff_alert_role = self.server.get_role(config['rl_id']['staff-alert'])
+        staff_role = self.server.get_role(self.bot.config['rl_id']['staff'])
+        bot_role = self.server.get_role(self.bot.config['rl_id']['/'])
+        staff_alert_role = self.server.get_role(self.bot.config['rl_id']['staff-alert'])
         if staff_role is None or bot_role is None or staff_alert_role is None:
             raise ValueError("Could not find roles from role ids in config")
         self.staff_role = staff_role
         self.bot_role = bot_role
         self.staff_alert_role = staff_alert_role
 
-        tickets_category = await self.server.fetch_channel(config['cat_id']['tickets'])
+        tickets_category = await self.server.fetch_channel(self.bot.config['cat_id']['tickets'])
         if not isinstance(tickets_category, CategoryChannel):
             raise ValueError("Could not find tickets category from id in config")
         self.ticket_category = tickets_category
 
-        ticket_log_channel = await self.server.fetch_channel(config['ch_id']['ticket-log'])
+        ticket_log_channel = await self.server.fetch_channel(self.bot.config['ch_id']['ticket-log'])
         if not isinstance(ticket_log_channel, TextChannel):
             raise ValueError("Could not find ticket log channel from id in config")
         self.ticket_log_channel = ticket_log_channel
@@ -83,12 +80,12 @@ class ContactStaff(commands.GroupCog):
         self.ticket_channels = []
 
     async def load_ticket_channels(self) -> None:
-        server = self.bot.get_guild(config['server_id'])
+        server = self.bot.get_guild(self.bot.config['server_id'])
         if server is None:
             raise ValueError("Could not find server from server_id in config")
         self.server = server
 
-        tickets_category = self.server.get_channel(config['cat_id']['tickets'])
+        tickets_category = self.server.get_channel(self.bot.config['cat_id']['tickets'])
         if not isinstance(tickets_category, CategoryChannel):
             raise ValueError("Could not find tickets category from id in config")
         self.ticket_category = tickets_category

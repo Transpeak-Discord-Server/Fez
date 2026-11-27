@@ -20,14 +20,12 @@ from discord import TextChannel, DMChannel, GroupChannel
 from discord.abc import GuildChannel
 from discord.ext import commands
 
-from shared.config import Config
 from shared.transpeak_bot import TranspeakBot
 from shared.utils.errors import ConfigError
 from shared.utils.user_info import is_on_wl
 import os
 
 CURRENT_PATH = os.path.dirname(__file__)
-config = Config.json_config
 
 @dataclass
 class LoggingDetails:
@@ -35,15 +33,6 @@ class LoggingDetails:
     colour: discord.Colour
 
 class MessageLogging(commands.Cog):
-
-    UNIFIED_SFW_ID = config['ch_id']['#unified-chat-sfw']
-    UNIFIED_NSFW_ID = config['ch_id']['#unified-chat-nsfw']
-    STAFF_UNIFIED_ID = config['ch_id']['#unified-chat-staff']
-    BOT_DMS_ID = config['ch_id']['#bot-dms']
-
-    STAFF_CHANNELS = [config['ch_id'][x] for x in config['staff_channels']]
-    NSFW_CHANNELS = [config['ch_id'][x] for x in config['nsfw_channels']]
-    IGNORED_CHANNELS = [config['ch_id'][x] for x in config['logging_ignored_channels']]
 
     ON_MESSAGE_DETAILS = LoggingDetails(
         title='Message sent 💬',
@@ -66,6 +55,15 @@ class MessageLogging(commands.Cog):
         self.unified_sfw: TextChannel | None = None
         self.staff_unified: TextChannel | None = None
         self.bot = bot
+
+        self.UNIFIED_SFW_ID = self.bot.config['ch_id']['#unified-chat-sfw']
+        self.UNIFIED_NSFW_ID = self.bot.config['ch_id']['#unified-chat-nsfw']
+        self.STAFF_UNIFIED_ID = self.bot.config['ch_id']['#unified-chat-staff']
+        self.BOT_DMS_ID = self.bot.config['ch_id']['#bot-dms']
+
+        self.STAFF_CHANNELS = [self.bot.config['ch_id'][x] for x in self.bot.config['staff_channels']]
+        self.NSFW_CHANNELS = [self.bot.config['ch_id'][x] for x in self.bot.config['nsfw_channels']]
+        self.IGNORED_CHANNELS = [self.bot.config['ch_id'][x] for x in self.bot.config['logging_ignored_channels']]
 
     async def cog_load(self) -> None:
         unified_sfw = await self.bot.fetch_channel(self.UNIFIED_SFW_ID)

@@ -21,10 +21,7 @@ from discord import app_commands, ForumChannel, DMChannel, PartialMessageable
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from shared.config import Config
 from shared.transpeak_bot import TranspeakBot
-
-config = Config.json_config
 
 class ReportForm(discord.ui.Modal, title="Report Message"):
 
@@ -33,12 +30,12 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
 
     @classmethod
     async def ready(cls, bot: TranspeakBot) -> None:
-        reports_channel = await bot.fetch_channel(config['ch_id']['#reports'])
+        reports_channel = await bot.fetch_channel(bot.config['ch_id']['#reports'])
         if not isinstance(reports_channel, ForumChannel):
             raise ValueError("reports channel is not a forum channel")
         cls.reports_channel = reports_channel
 
-        reports_over18_channel = await bot.fetch_channel(config['ch_id']['#reports-over18'])
+        reports_over18_channel = await bot.fetch_channel(bot.config['ch_id']['#reports-over18'])
         if not isinstance(reports_over18_channel, ForumChannel):
             raise ValueError("reports-over18 channel is not a forum channel")
         cls.reports_over18_channel = reports_over18_channel
@@ -53,11 +50,12 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
         required=False
     )
 
-    def __init__(self, message: discord.Message):
+    def __init__(self, message: discord.Message, bot: TranspeakBot):
         super().__init__()
         self.message = message
+        self.bot = bot
         if message.guild is None: raise RuntimeError("No guild for reported message")
-        self.staff_alert = message.guild.get_role(config['rl_id']['staff-alert'])
+        self.staff_alert = message.guild.get_role(self.bot.config['rl_id']['staff-alert'])
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
 
@@ -86,24 +84,23 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
         await interaction.response.send_message("Report submitted! Staff may reach out if they need further information.", ephemeral=True)
         return None
 
-async def report_message(interaction: discord.Interaction, message: discord.Message) -> None:
-
-    server = interaction.guild
-    if not server: return None
-
-    await interaction.response.send_modal(ReportForm(message))
-    return None
-
-report_button = app_commands.ContextMenu(
-        name="Report Message",
-        callback=report_message
-    )
-
 class Report(commands.Cog):
 
     def __init__(self, bot: TranspeakBot):
         self.bot = bot
+
+        report_button = app_commands.ContextMenu(
+            name="Report Message",
+            callback=self.report_message
+        )
         self.bot.tree.add_command(report_button)
+
+    async def report_message(self, interaction: discord.Interaction, message: discord.Message) -> None:
+        server = interaction.guild
+        if not server: return None
+
+        await interaction.response.send_modal(ReportForm(message, self.bot))
+        return None
 
     async def cog_load(self) -> None:
         await ReportForm.ready(self.bot)
