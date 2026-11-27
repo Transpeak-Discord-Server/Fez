@@ -22,7 +22,6 @@ from datetime import datetime
 from random import randint, choice, sample
 from pathlib import Path
 
-from shared.config import Config
 from shared.transpeak_bot import TranspeakBot
 
 PROJECT_PATH = Path(os.path.dirname(__file__)).parent
@@ -33,6 +32,8 @@ class StaffCommands(app_commands.Group):
     def __init__(self, bot: TranspeakBot) -> None:
         super().__init__(name="staff")
         self.bot = bot
+
+        self.ZOEY_DATA = self.bot.config['ZOEY_DATA']
 
     # Aven
     AVEN_USER_ID = 275263004961144833
@@ -67,8 +68,6 @@ class StaffCommands(app_commands.Group):
         return None
 
     # Zoey
-    ZOEY_DATA = Config.json_config['ZOEY_DATA']
-
     @app_commands.command()
     async def zoey(self, interaction: discord.Interaction[TranspeakBot], member_str: str | None = None) -> None:
         member_int = int(member_str) if member_str and member_str.isdigit() else None

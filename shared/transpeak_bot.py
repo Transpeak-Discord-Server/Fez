@@ -21,7 +21,8 @@ from discord import app_commands, Interaction
 from discord.app_commands import AppCommandError
 from discord.ext import commands
 
-from shared.database.__main__ import Database, get_database
+from shared.config import Config
+from shared.database.__main__ import get_database
 from shared.utils.misc import tree_error, shared_error
 
 
@@ -33,13 +34,13 @@ class TranspeakBot(commands.Bot):
     """Only includes things common to any bot on Transpeak.
     The bot in extensions can be typed as TranspeakBot (instead of commands.Bot) for easy access to the database."""
 
-    database: Database
+    database = get_database()
+    config = Config.json_config
 
     def __init__(self, bot_extensions: list[str], intents: discord.Intents, **kwargs: Any):
         # noinspection PyTypeChecker
         super().__init__(command_prefix="!", tree_cls=TranspeakBotTree, intents=intents, **kwargs)
         self.bot_extensions = bot_extensions
-        self.database = get_database()
 
     async def setup_hook(self) -> None:
 

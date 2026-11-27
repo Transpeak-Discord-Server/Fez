@@ -19,7 +19,6 @@ from discord import app_commands
 
 from shared.database import data
 from shared.database.UserDAO import UserDAO
-from shared.database.__main__ import Database, get_database
 from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import format_time, require_server, get_week
 from shared.utils.permissions import permission_check, Level
@@ -27,13 +26,10 @@ from shared.utils.permissions import permission_check, Level
 
 class UserGroup(app_commands.Group):
 
-    database: Database
-
     def __init__(self, bot: TranspeakBot):
         super().__init__()
         self.bot = bot
         self.name = "user"
-        self.database = get_database()
 
     @staticmethod
     async def build_info_embed(server: discord.Guild, user: discord.User | discord.Member, db_data: data.User | None, msg_count_week: int, msg_count_week_previous: int, wl: str | None, sc: str | None) -> discord.Embed:
@@ -86,7 +82,7 @@ class UserGroup(app_commands.Group):
         server = await require_server(interaction)
         if not server: return
 
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             user_db_info = await user_dao.get_user_info(user.id)
             msg_count_week = await user_dao.get_message_count_week(user.id)
@@ -101,7 +97,7 @@ class UserGroup(app_commands.Group):
     @app_commands.command()
     @permission_check(Level.STAFF)
     async def set_watchlist(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, wl: str) -> None:
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.set_watchlist(user.id, wl)
         await interaction.response.send_message("Watchlist set.")
@@ -109,7 +105,7 @@ class UserGroup(app_commands.Group):
     @app_commands.command()
     @permission_check(Level.STAFF)
     async def set_special_considerations(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, sc: str) -> None:
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.set_special_considerations(user.id, sc)
         await interaction.response.send_message("Special considerations set.")
@@ -117,7 +113,7 @@ class UserGroup(app_commands.Group):
     @app_commands.command()
     @permission_check(Level.STAFF)
     async def reg_ban(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member) -> None:
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.reg_ban(user.id)
         await interaction.response.send_message("User has been banned from self-registration.")
@@ -125,7 +121,7 @@ class UserGroup(app_commands.Group):
     @app_commands.command()
     @permission_check(Level.STAFF)
     async def un_reg_ban(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member) -> None:
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.un_reg_ban(user.id)
         await interaction.response.send_message("User is no longer registration banned.")
@@ -133,7 +129,7 @@ class UserGroup(app_commands.Group):
     @app_commands.command()
     @permission_check(Level.STAFF)
     async def set_under_18(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, under_18: bool) -> None:
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.set_user_over_18(user.id, under_18)
         await interaction.response.send_message("User under 18 value set.")
