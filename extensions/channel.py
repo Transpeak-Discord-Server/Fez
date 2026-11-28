@@ -1,14 +1,27 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import dataclasses
 
 import discord
 from discord import app_commands
-from discord.ext import commands
 
-from shared.config import Config
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import require_server
 from shared.utils.permissions import permission_check, Level, has_permission
-
-config = Config.json_config
 
 @dataclasses.dataclass
 class RoleLevelPair:
@@ -17,18 +30,15 @@ class RoleLevelPair:
 
 class Channel(app_commands.Group):
 
-    bot: commands.Bot
+    bot: TranspeakBot
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         super().__init__()
         self.bot = bot
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def slow_mode(self, interaction: discord.Interaction[commands.Bot], delay: int | None = None) -> None:
-        server = await require_server(interaction)
-        if not server: return
-
+    async def slow_mode(self, interaction: discord.Interaction[TranspeakBot], delay: int | None = None) -> None:
         channel = interaction.channel
         if not isinstance(channel, discord.TextChannel | discord.Thread | discord.VoiceChannel):
             await interaction.response.send_message("Cannot set slow mode in this channel!")
@@ -47,11 +57,10 @@ class Channel(app_commands.Group):
 
         await interaction.response.send_message(f"Slow mode set to {delay} seconds.")
 
-    @staticmethod
-    async def disable_staff_only(interaction: discord.Interaction[commands.Bot], server: discord.Guild, channel: discord.TextChannel | discord.VoiceChannel, role_level: RoleLevelPair | None = None) -> None:
+    async def disable_staff_only(self, interaction: discord.Interaction[TranspeakBot], server: discord.Guild, channel: discord.TextChannel | discord.VoiceChannel, role_level: RoleLevelPair | None = None) -> None:
         overwrites = dict(channel.overwrites)
 
-        staff_role = server.get_role(config['rl_id']['staff'])
+        staff_role = server.get_role(self.bot.config['rl_id']['staff'])
         if not staff_role:
             await interaction.response.send_message("Could not find staff role from bot config")
             return
@@ -66,7 +75,7 @@ class Channel(app_commands.Group):
             if isinstance(role, discord.Role) and role < role_level.role and perm.view_channel is True:
 
                 # New members can view trans-resources, but can't send anything. TODO: Make this not hardcoded.
-                if channel.id == config['ch_id']['#trans-resources'] and role.id == config['rl_id']['new']:
+                if channel.id == self.bot.config['ch_id']['#trans-resources'] and role.id == self.bot.config['rl_id']['new']:
                     continue
 
                 overwrites[role].update(send_messages=True)
@@ -75,11 +84,10 @@ class Channel(app_commands.Group):
 
         await interaction.response.send_message("Staff only mode has been disabled for this channel.")
 
-    @staticmethod
-    async def enable_staff_only(interaction: discord.Interaction[commands.Bot], server: discord.Guild, channel: discord.TextChannel | discord.VoiceChannel, role_level: RoleLevelPair | None = None) -> None:
+    async def enable_staff_only(self, interaction: discord.Interaction[TranspeakBot], server: discord.Guild, channel: discord.TextChannel | discord.VoiceChannel, role_level: RoleLevelPair | None = None) -> None:
         overwrites = dict(channel.overwrites)
 
-        staff_role = server.get_role(config['rl_id']['staff'])
+        staff_role = server.get_role(self.bot.config['rl_id']['staff'])
         if not staff_role:
             await interaction.response.send_message("Could not find staff role from bot config")
             return
@@ -98,9 +106,8 @@ class Channel(app_commands.Group):
 
         await interaction.response.send_message("Staff only mode has been enabled for this channel.")
 
-    @staticmethod
-    async def get_is_staff_only(interaction: discord.Interaction[commands.Bot], server: discord.Guild, channel: discord.TextChannel | discord.VoiceChannel, role_level: RoleLevelPair | None = None) -> bool | None:
-        staff_role = server.get_role(config['rl_id']['staff'])
+    async def get_is_staff_only(self, interaction: discord.Interaction[TranspeakBot], server: discord.Guild, channel: discord.TextChannel | discord.VoiceChannel, role_level: RoleLevelPair | None = None) -> bool | None:
+        staff_role = server.get_role(self.bot.config['rl_id']['staff'])
         if not staff_role:
             await interaction.response.send_message("Could not find staff role from bot config")
             return None
@@ -122,9 +129,8 @@ class Channel(app_commands.Group):
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def staff_only(self, interaction: discord.Interaction[commands.Bot], channel: discord.TextChannel | discord.VoiceChannel | None = None) -> None:
+    async def staff_only(self, interaction: discord.Interaction[TranspeakBot], channel: discord.TextChannel | discord.VoiceChannel | None = None) -> None:
         server = await require_server(interaction)
-        if not server: return
 
         if channel is None:
             interaction_channel = interaction.channel
@@ -133,7 +139,7 @@ class Channel(app_commands.Group):
                 return
             channel = interaction_channel
 
-        staff_role = server.get_role(config['rl_id']['staff'])
+        staff_role = server.get_role(self.bot.config['rl_id']['staff'])
         if not staff_role:
             await interaction.response.send_message("Could not find staff role from bot config")
             return
@@ -148,5 +154,5 @@ class Channel(app_commands.Group):
 
         await self.enable_staff_only(interaction, server, channel)
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     bot.tree.add_command(Channel(bot))

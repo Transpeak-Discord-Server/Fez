@@ -1,16 +1,31 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import discord
 from dataclasses import dataclass
 from discord import TextChannel, DMChannel, GroupChannel
 from discord.abc import GuildChannel
 from discord.ext import commands
 
-from shared.config import Config
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.errors import ConfigError
 from shared.utils.user_info import is_on_wl
 import os
 
 CURRENT_PATH = os.path.dirname(__file__)
-config = Config.json_config
 
 @dataclass
 class LoggingDetails:
@@ -18,15 +33,6 @@ class LoggingDetails:
     colour: discord.Colour
 
 class MessageLogging(commands.Cog):
-
-    UNIFIED_SFW_ID = config['ch_id']['#unified-chat-sfw']
-    UNIFIED_NSFW_ID = config['ch_id']['#unified-chat-nsfw']
-    STAFF_UNIFIED_ID = config['ch_id']['#unified-chat-staff']
-    BOT_DMS_ID = config['ch_id']['#bot-dms']
-
-    STAFF_CHANNELS = [config['ch_id'][x] for x in config['staff_channels']]
-    NSFW_CHANNELS = [config['ch_id'][x] for x in config['nsfw_channels']]
-    IGNORED_CHANNELS = [config['ch_id'][x] for x in config['logging_ignored_channels']]
 
     ON_MESSAGE_DETAILS = LoggingDetails(
         title='Message sent 💬',
@@ -43,12 +49,21 @@ class MessageLogging(commands.Cog):
         colour=discord.Colour.red()
     )
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: TranspeakBot) -> None:
         self.bot_dms: TextChannel | None = None
         self.unified_nsfw: TextChannel | None = None
         self.unified_sfw: TextChannel | None = None
         self.staff_unified: TextChannel | None = None
         self.bot = bot
+
+        self.UNIFIED_SFW_ID = self.bot.config['ch_id']['#unified-chat-sfw']
+        self.UNIFIED_NSFW_ID = self.bot.config['ch_id']['#unified-chat-nsfw']
+        self.STAFF_UNIFIED_ID = self.bot.config['ch_id']['#unified-chat-staff']
+        self.BOT_DMS_ID = self.bot.config['ch_id']['#bot-dms']
+
+        self.STAFF_CHANNELS = [self.bot.config['ch_id'][x] for x in self.bot.config['staff_channels']]
+        self.NSFW_CHANNELS = [self.bot.config['ch_id'][x] for x in self.bot.config['nsfw_channels']]
+        self.IGNORED_CHANNELS = [self.bot.config['ch_id'][x] for x in self.bot.config['logging_ignored_channels']]
 
     async def cog_load(self) -> None:
         unified_sfw = await self.bot.fetch_channel(self.UNIFIED_SFW_ID)
@@ -141,5 +156,5 @@ class MessageLogging(commands.Cog):
         if not isinstance(message.channel, DMChannel | GroupChannel): return
         await self.log(message, self.ON_MESSAGE_DETAILS.title, self.ON_MESSAGE_DETAILS.colour, message.content)
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     await bot.add_cog(MessageLogging(bot))

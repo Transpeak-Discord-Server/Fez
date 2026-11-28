@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 from pathlib import Path
 
@@ -5,147 +21,145 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from shared.config import Config
 from shared.database.RoleDAO import RoleDAO
-from shared.database.__main__ import get_database
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import require_server
 from shared.utils.permissions import permission_check, Level, has_permission
 
-config = Config.json_config
-database = get_database()
+class Timeout(commands.Cog):
 
-timeout_category_id: int = config['cat_id']['timeouts']
-timeout_role_id: int = config['rl_id']['timeout']
+    timeout_msg: str
 
-timeout_msg: str
+    def __init__(self, bot: TranspeakBot):
+        self.bot = bot
 
+        self.timeout_category_id: int = self.bot.config['cat_id']['timeouts']
+        self.timeout_role_id: int = self.bot.config['rl_id']['timeout']
 
-async def add_timeout(user: discord.Member, server: discord.Guild, interaction: discord.Interaction[commands.Bot]) -> None:
-    timeout_channel_name = f'timeout-{user.id}'
-    timeout_role = server.get_role(timeout_role_id)
-    timeout_category = server.get_channel(timeout_category_id)
+        file_path = Path(os.path.dirname(__file__))
+        with open(Path(file_path / ".." / "shared" / "messages" / "timeout")) as file:
+            self.timeout_msg = file.read()
 
-    if has_permission(user, Level.STAFF):
-        await interaction.followup.send("No.")
-        return
+    async def add_timeout(self, user: discord.Member, server: discord.Guild, interaction: discord.Interaction[TranspeakBot]) -> None:
+        timeout_channel_name = f'timeout-{user.id}'
+        timeout_role = server.get_role(self.timeout_role_id)
+        timeout_category = server.get_channel(self.timeout_category_id)
 
-    if not timeout_role:
-        raise ValueError("Could not get timeout role from config ID")
-    if not isinstance(timeout_category, discord.CategoryChannel):
-        raise ValueError("Could not get timeout category from config ID")
+        if has_permission(user, Level.STAFF):
+            await interaction.followup.send("No.")
+            return
 
-    bot_role = server.get_role(config['rl_id']['/'])
-    lead_mod_role = server.get_role(config['rl_id']['+'])
-    mod_role = server.get_role(config['rl_id']['-'])
-    staff_role = server.get_role(config['rl_id']['staff'])
-    helper_role = server.get_role(config['rl_id']['helper'])
+        if not timeout_role:
+            raise ValueError("Could not get timeout role from config ID")
+        if not isinstance(timeout_category, discord.CategoryChannel):
+            raise ValueError("Could not get timeout category from config ID")
 
-    if bot_role is None or lead_mod_role is None or mod_role is None or staff_role is None or helper_role is None:
-        raise ValueError("Could not find one or more roles from config IDs")
+        bot_role = server.get_role(self.bot.config['rl_id']['/'])
+        lead_mod_role = server.get_role(self.bot.config['rl_id']['+'])
+        mod_role = server.get_role(self.bot.config['rl_id']['-'])
+        staff_role = server.get_role(self.bot.config['rl_id']['staff'])
+        helper_role = server.get_role(self.bot.config['rl_id']['helper'])
 
-    channel_overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {
-        server.default_role: discord.PermissionOverwrite(view_channel=False),
-        user: discord.PermissionOverwrite(view_channel=True, send_messages=True),
-        bot_role: discord.PermissionOverwrite(view_channel=True,send_messages=True,manage_channels=True),
-        lead_mod_role: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True),
-        mod_role: discord.PermissionOverwrite(view_channel=True, send_messages=True),
-        staff_role: discord.PermissionOverwrite(view_channel=True, send_messages=True),
-        helper_role: discord.PermissionOverwrite(view_channel=True, send_messages=True)
-    }
+        if bot_role is None or lead_mod_role is None or mod_role is None or staff_role is None or helper_role is None:
+            raise ValueError("Could not find one or more roles from config IDs")
 
-    channel = await server.create_text_channel(
-        timeout_channel_name,
-        category=timeout_category,
-        overwrites=channel_overwrites,
-        reason=f"Timeout channel for {user.display_name}, timed out by: {interaction.user.display_name} ({interaction.user.id}"
-    )
+        channel_overwrites: dict[discord.Role | discord.Member | discord.Object, discord.PermissionOverwrite] = {
+            server.default_role: discord.PermissionOverwrite(view_channel=False),
+            user: discord.PermissionOverwrite(view_channel=True, send_messages=True),
+            bot_role: discord.PermissionOverwrite(view_channel=True,send_messages=True,manage_channels=True),
+            lead_mod_role: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True),
+            mod_role: discord.PermissionOverwrite(view_channel=True, send_messages=True),
+            staff_role: discord.PermissionOverwrite(view_channel=True, send_messages=True),
+            helper_role: discord.PermissionOverwrite(view_channel=True, send_messages=True)
+        }
 
-    roles_to_remove = [role for role in user.roles
-                       if not role.is_default() and
-                       role.name not in config['identities']['transfemale_pronouns'] and
-                       role.name not in config['identities']['transmale_pronouns'] and
-                       role.name not in config['identities']['nonbinary_pronouns']]
+        channel = await server.create_text_channel(
+            timeout_channel_name,
+            category=timeout_category,
+            overwrites=channel_overwrites,
+            reason=f"Timeout channel for {user.display_name}, timed out by: {interaction.user.display_name} ({interaction.user.id}"
+        )
 
-    async with database.get_session() as session:
-        role_dao = RoleDAO(session)
-        await role_dao.save_roles(user.id, roles_to_remove)
+        roles_to_remove = [role for role in user.roles
+                           if not role.is_default() and
+                           role.name not in self.bot.config['identities']['transfemale_pronouns'] and
+                           role.name not in self.bot.config['identities']['transmale_pronouns'] and
+                           role.name not in self.bot.config['identities']['nonbinary_pronouns']]
 
-    await user.remove_roles(*roles_to_remove, reason=f"Role removal for timeout by: {interaction.user.display_name} ({interaction.user.id})")
-    await user.add_roles(timeout_role, reason=f"Timed out by: {interaction.user.display_name} ({interaction.user.id})")
-    await channel.send(f"{user.mention} {timeout_msg}")
-    await interaction.followup.send(f"{user.display_name} is now in timeout.")
+        async with self.bot.database.get_session() as session:
+            role_dao = RoleDAO(session)
+            await role_dao.save_roles(user.id, roles_to_remove)
 
-def find_timeout_channel(user: discord.Member, server: discord.Guild) -> discord.TextChannel | None:
-    timeout_channel_name = f'timeout-{user.id}'
-    timeout_category = server.get_channel(timeout_category_id)
-    if not isinstance(timeout_category, discord.CategoryChannel):
-        raise ValueError("Could not get timeout category from config ID")
+        await user.remove_roles(*roles_to_remove, reason=f"Role removal for timeout by: {interaction.user.display_name} ({interaction.user.id})")
+        await user.add_roles(timeout_role, reason=f"Timed out by: {interaction.user.display_name} ({interaction.user.id})")
+        await channel.send(f"{user.mention} {self.timeout_msg}")
+        await interaction.followup.send(f"{user.display_name} is now in timeout.")
 
-    timeout_channels = timeout_category.channels
-    for channel in timeout_channels:
-        if isinstance(channel, discord.TextChannel) and channel.name == timeout_channel_name:
-            return channel
-    return None
+    def find_timeout_channel(self, user: discord.Member, server: discord.Guild) -> discord.TextChannel | None:
+        timeout_channel_name = f'timeout-{user.id}'
+        timeout_category = server.get_channel(self.timeout_category_id)
+        if not isinstance(timeout_category, discord.CategoryChannel):
+            raise ValueError("Could not get timeout category from config ID")
 
-async def remove_timeout(user: discord.Member, server: discord.Guild, interaction: discord.Interaction[commands.Bot]) -> None:
-    timeout_role = server.get_role(timeout_role_id)
-    if not timeout_role:
-        raise ValueError("Could not get timeout role from config ID")
+        timeout_channels = timeout_category.channels
+        for channel in timeout_channels:
+            if isinstance(channel, discord.TextChannel) and channel.name == timeout_channel_name:
+                return channel
+        return None
 
-    timeout_channel = find_timeout_channel(user, server)
-    if not timeout_channel:
-        await interaction.response.send_message("Could not find user's timeout channel.")
-        return
+    async def remove_timeout(self, user: discord.Member, server: discord.Guild, interaction: discord.Interaction[TranspeakBot]) -> None:
+        timeout_role = server.get_role(self.timeout_role_id)
+        if not timeout_role:
+            raise ValueError("Could not get timeout role from config ID")
 
-    await user.remove_roles(timeout_role, reason=f"Removed from timeout by {interaction.user.display_name} ({interaction.user.id})")
+        timeout_channel = self.find_timeout_channel(user, server)
+        if not timeout_channel:
+            await interaction.response.send_message("Could not find user's timeout channel.")
+            return
 
-    async with database.get_session() as session:
-        role_dao = RoleDAO(session)
-        await user.add_roles(*(await role_dao.get_saved_roles(user.id, server)), reason=f'Restoring roles from before timeout')
+        await user.remove_roles(timeout_role, reason=f"Removed from timeout by {interaction.user.display_name} ({interaction.user.id})")
 
-    lead_mod_role = server.get_role(config['rl_id']['+'])
-    mod_role = server.get_role(config['rl_id']['-'])
-    staff_role = server.get_role(config['rl_id']['staff'])
-    helper_role = server.get_role(config['rl_id']['helper'])
-    staff_alert_role = server.get_role(config['rl_id']['staff-alert'])
+        async with self.bot.database.get_session() as session:
+            role_dao = RoleDAO(session)
+            await user.add_roles(*(await role_dao.get_saved_roles(user.id, server)), reason=f'Restoring roles from before timeout')
 
-    if lead_mod_role is None or mod_role is None or staff_role is None or helper_role is None or staff_alert_role is None:
-        raise ValueError("Could not find one or more roles from config IDs")
+        lead_mod_role = server.get_role(self.bot.config['rl_id']['+'])
+        mod_role = server.get_role(self.bot.config['rl_id']['-'])
+        staff_role = server.get_role(self.bot.config['rl_id']['staff'])
+        helper_role = server.get_role(self.bot.config['rl_id']['helper'])
+        staff_alert_role = server.get_role(self.bot.config['rl_id']['staff-alert'])
 
-    await timeout_channel.set_permissions(user, overwrite=None)
-    await timeout_channel.set_permissions(lead_mod_role, overwrite=discord.PermissionOverwrite(view_channel=True,send_messages=False))
-    await timeout_channel.set_permissions(mod_role, overwrite=None)
-    await timeout_channel.set_permissions(staff_role, overwrite=None)
-    await timeout_channel.set_permissions(helper_role, overwrite=None)
+        if lead_mod_role is None or mod_role is None or staff_role is None or helper_role is None or staff_alert_role is None:
+            raise ValueError("Could not find one or more roles from config IDs")
 
-    await timeout_channel.edit(name=f'closed-{user.id}', reason=f'Timeout removed by {interaction.user.display_name} ({interaction.user.id})')
-    await timeout_channel.send(f"{staff_alert_role.mention}, this timeout has concluded.")
-    await interaction.followup.send(f"{user.display_name} has been removed from timeout and roles have been restored.")
+        await timeout_channel.set_permissions(user, overwrite=None)
+        await timeout_channel.set_permissions(lead_mod_role, overwrite=discord.PermissionOverwrite(view_channel=True,send_messages=False))
+        await timeout_channel.set_permissions(mod_role, overwrite=None)
+        await timeout_channel.set_permissions(staff_role, overwrite=None)
+        await timeout_channel.set_permissions(helper_role, overwrite=None)
 
-
-
-@app_commands.command()
-@permission_check(Level.HELPER)
-async def timeout(interaction: discord.Interaction[commands.Bot], user: discord.Member) -> None:
-    server = await require_server(interaction)
-    if not server: return
-
-    # This command can take a while, so let Discord know we got it and are working on it
-    await interaction.response.defer(thinking=True)
-
-    # User is not timed out yet
-    if user.get_role(timeout_role_id) is None:
-        await add_timeout(user, server, interaction)
-    # User is already timed out
-    else:
-        await remove_timeout(user, server, interaction)
+        await timeout_channel.edit(name=f'closed-{user.id}', reason=f'Timeout removed by {interaction.user.display_name} ({interaction.user.id})')
+        await timeout_channel.send(f"{staff_alert_role.mention}, this timeout has concluded.")
+        await interaction.followup.send(f"{user.display_name} has been removed from timeout and roles have been restored.")
 
 
 
-async def setup(bot: commands.Bot) -> None:
-    bot.tree.add_command(timeout)
+    @app_commands.command()
+    @permission_check(Level.HELPER)
+    async def timeout(self, interaction: discord.Interaction[TranspeakBot], user: discord.Member) -> None:
+        server = await require_server(interaction)
 
-    global timeout_msg
-    file_path = Path(os.path.dirname(__file__))
-    with open(Path(file_path / ".." / "shared" / "messages" / "timeout")) as file:
-        timeout_msg = file.read()
+        # This command can take a while, so let Discord know we got it and are working on it
+        await interaction.response.defer(thinking=True)
+
+        # User is not timed out yet
+        if user.get_role(self.timeout_role_id) is None:
+            await self.add_timeout(user, server, interaction)
+        # User is already timed out
+        else:
+            await self.remove_timeout(user, server, interaction)
+
+
+
+async def setup(bot: TranspeakBot) -> None:
+    await bot.add_cog(Timeout(bot))

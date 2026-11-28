@@ -18,27 +18,28 @@ import discord
 import os
 import pytz
 from discord import app_commands
-from discord.ext import commands
 from datetime import datetime
 from random import randint, choice, sample
 from pathlib import Path
 
-from shared.config import Config
+from shared.transpeak_bot import TranspeakBot
 
 PROJECT_PATH = Path(os.path.dirname(__file__)).parent
 
 @app_commands.guild_only()
 class StaffCommands(app_commands.Group):
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: TranspeakBot) -> None:
         super().__init__(name="staff")
         self.bot = bot
+
+        self.ZOEY_DATA = self.bot.config['ZOEY_DATA']
 
     # Aven
     AVEN_USER_ID = 275263004961144833
     AVEN_SLEEP_WINDOW = (2, 8)
 
-    async def aven_time(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def aven_time(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         time_uk = datetime.now(pytz.timezone('Europe/London'))
         time_uk_str = time_uk.strftime('%H:%M:%S')
         start, end = self.AVEN_SLEEP_WINDOW
@@ -49,7 +50,7 @@ class StaffCommands(app_commands.Group):
         return None
 
     @app_commands.command()
-    async def aven(self, interaction: discord.Interaction[commands.Bot], time: bool | None) -> None:
+    async def aven(self, interaction: discord.Interaction[TranspeakBot], time: bool | None) -> None:
         if time:
             await self.aven_time(interaction)
             return None
@@ -61,16 +62,14 @@ class StaffCommands(app_commands.Group):
     ASH_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/ash_staff_command.gif')
 
     @app_commands.command()
-    async def ash(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def ash(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         with open(self.ASH_IMAGE_PATH, 'rb') as f:
             await interaction.response.send_message(file=discord.File(f, self.ASH_IMAGE_PATH))
         return None
 
     # Zoey
-    ZOEY_DATA = Config.json_config['ZOEY_DATA']
-
     @app_commands.command()
-    async def zoey(self, interaction: discord.Interaction[commands.Bot], member_str: str | None = None) -> None:
+    async def zoey(self, interaction: discord.Interaction[TranspeakBot], member_str: str | None = None) -> None:
         member_int = int(member_str) if member_str and member_str.isdigit() else None
 
         server = interaction.guild
@@ -92,7 +91,7 @@ class StaffCommands(app_commands.Group):
     CAT_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/night.gif')
 
     @app_commands.command()
-    async def cat(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def cat(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         with open(self.CAT_IMAGE_PATH, 'rb') as f:
             await interaction.response.send_message(file=discord.File(f, 'night_staff_command.gif'))
         return None
@@ -101,7 +100,7 @@ class StaffCommands(app_commands.Group):
     LUNA_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/luna_staff_command.png')
 
     @app_commands.command()
-    async def luna(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def luna(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         with open(self.LUNA_IMAGE_PATH, 'rb') as f:
             await interaction.response.send_message(file=discord.File(f, 'luna_staff_command.png'))
         return None
@@ -110,13 +109,13 @@ class StaffCommands(app_commands.Group):
     SIMON_USER_ID = 1383285080700747837
 
     @app_commands.command()
-    async def simon(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def simon(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         await interaction.response.send_message(f"<@{self.SIMON_USER_ID}> awoo!")
         return None
 
     # Ren
     @app_commands.command()
-    async def ren(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def ren(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         await interaction.response.send_message("yo")
         return None
 
@@ -124,7 +123,7 @@ class StaffCommands(app_commands.Group):
     CRYMSON_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/frank-iero-six-seven.gif')
 
     @app_commands.command()
-    async def crymson(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def crymson(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         with open(self.CRYMSON_IMAGE_PATH, 'rb') as f:
             await interaction.response.send_message(file=discord.File(f, 'crymson_staff_command.gif'))
         return None
@@ -133,7 +132,7 @@ class StaffCommands(app_commands.Group):
     KATELYN_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/katelyn.gif')
 
     @app_commands.command()
-    async def katelyn(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def katelyn(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         with open(self.KATELYN_IMAGE_PATH, 'rb') as f:
             await interaction.response.send_message(file=discord.File(f, 'katelyn_staff_command.gif'))
         return None
@@ -142,11 +141,11 @@ class StaffCommands(app_commands.Group):
     ICARUS_IMAGE_PATH = os.path.join(PROJECT_PATH, 'private/images/icarus.gif')
 
     @app_commands.command()
-    async def icarus(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def icarus(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         with open(self.ICARUS_IMAGE_PATH, 'rb') as f:
             await interaction.response.send_message(file=discord.File(f, 'icarus_staff_command.gif'))
         return None
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     bot.tree.add_command(StaffCommands(bot))

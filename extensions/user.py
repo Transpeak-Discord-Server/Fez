@@ -1,23 +1,35 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import discord
 from discord import app_commands
-from discord.ext import commands
 
 from shared.database import data
 from shared.database.UserDAO import UserDAO
-from shared.database.__main__ import Database, get_database
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import format_time, require_server, get_week
 from shared.utils.permissions import permission_check, Level
 
 
 class UserGroup(app_commands.Group):
 
-    database: Database
-
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         super().__init__()
         self.bot = bot
         self.name = "user"
-        self.database = get_database()
 
     @staticmethod
     async def build_info_embed(server: discord.Guild, user: discord.User | discord.Member, db_data: data.User | None, msg_count_week: int, msg_count_week_previous: int, wl: str | None, sc: str | None) -> discord.Embed:
@@ -64,13 +76,13 @@ class UserGroup(app_commands.Group):
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def info(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member | None) -> None:
+    async def info(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member | None) -> None:
         if user is None: user = interaction.user
 
         server = await require_server(interaction)
         if not server: return
 
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             user_db_info = await user_dao.get_user_info(user.id)
             msg_count_week = await user_dao.get_message_count_week(user.id)
@@ -84,43 +96,43 @@ class UserGroup(app_commands.Group):
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def set_watchlist(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, wl: str) -> None:
-        async with self.database.get_session() as session:
+    async def set_watchlist(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, wl: str) -> None:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.set_watchlist(user.id, wl)
         await interaction.response.send_message("Watchlist set.")
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def set_special_considerations(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, sc: str) -> None:
-        async with self.database.get_session() as session:
+    async def set_special_considerations(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, sc: str) -> None:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.set_special_considerations(user.id, sc)
         await interaction.response.send_message("Special considerations set.")
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def reg_ban(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member) -> None:
-        async with self.database.get_session() as session:
+    async def reg_ban(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member) -> None:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.reg_ban(user.id)
         await interaction.response.send_message("User has been banned from self-registration.")
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def un_reg_ban(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member) -> None:
-        async with self.database.get_session() as session:
+    async def un_reg_ban(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member) -> None:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.un_reg_ban(user.id)
         await interaction.response.send_message("User is no longer registration banned.")
 
     @app_commands.command()
     @permission_check(Level.STAFF)
-    async def set_under_18(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, under_18: bool) -> None:
-        async with self.database.get_session() as session:
+    async def set_under_18(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, under_18: bool) -> None:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.set_user_over_18(user.id, under_18)
         await interaction.response.send_message("User under 18 value set.")
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     bot.tree.add_command(UserGroup(bot))

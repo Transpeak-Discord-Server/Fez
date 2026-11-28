@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import dataclasses
 import io
 import textwrap
@@ -8,11 +24,9 @@ import discord
 from discord import TextChannel, app_commands, DMChannel, Guild, Role, CategoryChannel
 from discord.ext import commands
 
-from shared.config import Config
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import get_member_or_user
 from shared.utils.permissions import permission_check, Level
-
-config = Config.json_config
 
 
 @dataclasses.dataclass
@@ -33,32 +47,32 @@ class ContactStaff(commands.GroupCog):
     ticket_category: CategoryChannel
     ticket_log_channel: TextChannel
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         self.bot = bot
         if self.app_command is not None:
             self.app_command.name = "modmail"
 
     async def cog_load(self) -> None:
-        server = await self.bot.fetch_guild(config['server_id'])
+        server = await self.bot.fetch_guild(self.bot.config['server_id'])
         if server is None:
             raise ValueError("Could not find server from server_id in config")
         self.server = server
 
-        staff_role = self.server.get_role(config['rl_id']['staff'])
-        bot_role = self.server.get_role(config['rl_id']['/'])
-        staff_alert_role = self.server.get_role(config['rl_id']['staff-alert'])
+        staff_role = self.server.get_role(self.bot.config['rl_id']['staff'])
+        bot_role = self.server.get_role(self.bot.config['rl_id']['/'])
+        staff_alert_role = self.server.get_role(self.bot.config['rl_id']['staff-alert'])
         if staff_role is None or bot_role is None or staff_alert_role is None:
             raise ValueError("Could not find roles from role ids in config")
         self.staff_role = staff_role
         self.bot_role = bot_role
         self.staff_alert_role = staff_alert_role
 
-        tickets_category = await self.server.fetch_channel(config['cat_id']['tickets'])
+        tickets_category = await self.server.fetch_channel(self.bot.config['cat_id']['tickets'])
         if not isinstance(tickets_category, CategoryChannel):
             raise ValueError("Could not find tickets category from id in config")
         self.ticket_category = tickets_category
 
-        ticket_log_channel = await self.server.fetch_channel(config['ch_id']['ticket-log'])
+        ticket_log_channel = await self.server.fetch_channel(self.bot.config['ch_id']['ticket-log'])
         if not isinstance(ticket_log_channel, TextChannel):
             raise ValueError("Could not find ticket log channel from id in config")
         self.ticket_log_channel = ticket_log_channel
@@ -66,12 +80,12 @@ class ContactStaff(commands.GroupCog):
         self.ticket_channels = []
 
     async def load_ticket_channels(self) -> None:
-        server = self.bot.get_guild(config['server_id'])
+        server = self.bot.get_guild(self.bot.config['server_id'])
         if server is None:
             raise ValueError("Could not find server from server_id in config")
         self.server = server
 
-        tickets_category = self.server.get_channel(config['cat_id']['tickets'])
+        tickets_category = self.server.get_channel(self.bot.config['cat_id']['tickets'])
         if not isinstance(tickets_category, CategoryChannel):
             raise ValueError("Could not find tickets category from id in config")
         self.ticket_category = tickets_category
@@ -141,7 +155,7 @@ class ContactStaff(commands.GroupCog):
 
     @staticmethod
     async def send_msg_sent(message: str, author: discord.User | discord.Member,
-                            send_in: discord.abc.Messageable | discord.Interaction[commands.Bot]) -> None:
+                            send_in: discord.abc.Messageable | discord.Interaction[TranspeakBot]) -> None:
         msg_embed = discord.Embed(
             title="Message Sent",
             description=message,
@@ -155,7 +169,7 @@ class ContactStaff(commands.GroupCog):
 
         await send_in.send(embed=msg_embed)
 
-    async def get_msg_details(self, interaction: discord.Interaction[commands.Bot], message: str) -> TicketMessageDetails | None:
+    async def get_msg_details(self, interaction: discord.Interaction[TranspeakBot], message: str) -> TicketMessageDetails | None:
         server = interaction.guild
         if server is None:
             await interaction.response.send_message("This command can only be used within Transpeak!")
@@ -192,7 +206,7 @@ class ContactStaff(commands.GroupCog):
 
     @app_commands.command(description="Reply to the user in a Modmail ticket")
     @permission_check(Level.STAFF)
-    async def reply(self, interaction: discord.Interaction[commands.Bot], message: str) -> None:
+    async def reply(self, interaction: discord.Interaction[TranspeakBot], message: str) -> None:
 
         ticket_details = await self.get_msg_details(interaction, message)
         if not ticket_details:
@@ -235,7 +249,7 @@ class ContactStaff(commands.GroupCog):
 
     @app_commands.command(description="Close the ticket you are in")
     @permission_check(Level.STAFF)
-    async def close(self, interaction: discord.Interaction[commands.Bot], reason: str) -> None:
+    async def close(self, interaction: discord.Interaction[TranspeakBot], reason: str) -> None:
 
         ticket_details = await self.get_msg_details(interaction, reason)
         if not ticket_details:
@@ -283,6 +297,6 @@ class ContactStaff(commands.GroupCog):
 
         return None
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     await bot.add_cog(ContactStaff(bot))
     return None

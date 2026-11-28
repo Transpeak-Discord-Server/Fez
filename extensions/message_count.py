@@ -1,34 +1,44 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import datetime
 
 import discord
 from discord import app_commands, ForumChannel
 from discord.ext import commands
 
-from shared.config import Config
 from shared.database import data
 from shared.database.MessageCountDAO import MessageCountDAO
 from shared.database.UserDAO import UserDAO
-from shared.database.__main__ import Database, get_database
+from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import require_server, get_member_or_user
 from shared.utils.permissions import permission_check, Level, has_permission
 
-config = Config.json_config
-
 class MessageCount(commands.GroupCog):
 
-    bot: commands.Bot
-    database: Database
+    bot: TranspeakBot
     ignore_messages_role: discord.Role | None = None
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         self.bot = bot
-        self.database = get_database()
 
     @app_commands.command()
     @permission_check(Level.REGISTERED)
-    async def get(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member | None = None) -> None:
+    async def get(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member | None = None) -> None:
         server = await require_server(interaction)
-        if server is None: return None
 
         interaction_user = interaction.user
         if isinstance(interaction_user, discord.User):
@@ -41,7 +51,7 @@ class MessageCount(commands.GroupCog):
 
         if user is None: user = interaction_user
 
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             user_info = await user_dao.get_user_info(user.id)
 
@@ -54,9 +64,8 @@ class MessageCount(commands.GroupCog):
 
     @app_commands.command()
     @permission_check(Level.REGISTERED)
-    async def week(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member | None = None) -> None:
+    async def week(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member | None = None) -> None:
         server = await require_server(interaction)
-        if server is None: return None
 
         interaction_user = interaction.user
         if isinstance(interaction_user, discord.User):
@@ -69,7 +78,7 @@ class MessageCount(commands.GroupCog):
 
         if user is None: user = interaction_user
 
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             user_info = await user_dao.get_message_count_week(user.id)
 
@@ -78,8 +87,8 @@ class MessageCount(commands.GroupCog):
 
     @app_commands.command()
     @permission_check(Level.LEAD)
-    async def set(self, interaction: discord.Interaction[commands.Bot], user: discord.User | discord.Member, count: int) -> None:
-        async with self.database.get_session() as session:
+    async def set(self, interaction: discord.Interaction[TranspeakBot], user: discord.User | discord.Member, count: int) -> None:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.set_message_count(user.id, count)
         await interaction.response.send_message(f"{user.display_name}'s message count set to {count}")
@@ -87,7 +96,7 @@ class MessageCount(commands.GroupCog):
     def get_ignore_messages_role(self, server: discord.Guild) -> discord.Role:
         if self.ignore_messages_role is not None:
             return self.ignore_messages_role
-        ignore_messages_role = server.get_role(config['rl_id']['ignore-messages'])
+        ignore_messages_role = server.get_role(self.bot.config['rl_id']['ignore-messages'])
         if ignore_messages_role is None:
             raise ValueError("Could not find ignore-messages role")
         self.ignore_messages_role = ignore_messages_role
@@ -95,13 +104,12 @@ class MessageCount(commands.GroupCog):
 
     @app_commands.command()
     @permission_check(Level.REGISTERED)
-    async def top_10(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def top_10(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         server = await require_server(interaction)
-        if not server: return
 
         await interaction.response.defer(thinking=True)
 
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             msg_count_dao = MessageCountDAO(session)
             top_10_users = await msg_count_dao.get_top_10()
 
@@ -121,13 +129,12 @@ class MessageCount(commands.GroupCog):
 
     @app_commands.command()
     @permission_check(Level.REGISTERED)
-    async def top_10_week(self, interaction: discord.Interaction[commands.Bot]) -> None:
+    async def top_10_week(self, interaction: discord.Interaction[TranspeakBot]) -> None:
         server = await require_server(interaction)
-        if not server: return
 
         await interaction.response.defer(thinking=True)
 
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             msg_count_dao = MessageCountDAO(session)
             top_10_users = await msg_count_dao.get_top_10_week()
 
@@ -146,10 +153,9 @@ class MessageCount(commands.GroupCog):
         await interaction.followup.send(top_10_msg)
 
 
-    @staticmethod
-    async def check_verified(server: discord.Guild, message: discord.Message, user_info: data.User) -> None:
-        new_role = server.get_role(config['rl_id']['new'])
-        regular_role = server.get_role(config['rl_id']['regular'])
+    async def check_verified(self, server: discord.Guild, message: discord.Message, user_info: data.User) -> None:
+        new_role = server.get_role(self.bot.config['rl_id']['new'])
+        regular_role = server.get_role(self.bot.config['rl_id']['regular'])
 
         if new_role is None or regular_role is None: return
 
@@ -162,8 +168,8 @@ class MessageCount(commands.GroupCog):
                 await message.reply("You are now verified and can opt in to regular-only channels.")
 
     async def update_message_count(self, channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.Thread, server: discord.Guild, author: discord.User | discord.Member) -> None:
-        for ignored_channel in config['ignored_channels']:
-            if config['ch_id'][ignored_channel] == channel.id:
+        for ignored_channel in self.bot.config['ignored_channels']:
+            if self.bot.config['ch_id'][ignored_channel] == channel.id:
                 return
 
         permission_channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel | ForumChannel
@@ -178,7 +184,7 @@ class MessageCount(commands.GroupCog):
         ignore_overwrites = permission_channel.overwrites_for(ignore_messages_role)
         if not ignore_overwrites.is_empty(): return
 
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             await user_dao.increment_message_count(author.id)
 
@@ -193,7 +199,7 @@ class MessageCount(commands.GroupCog):
         if message.author.bot:
             return
 
-        async with self.database.get_session() as session:
+        async with self.bot.database.get_session() as session:
             user_dao = UserDAO(session)
             user_info = await user_dao.set_last_message(message.author.id, message.content)
 
@@ -206,5 +212,5 @@ class MessageCount(commands.GroupCog):
 
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     await bot.add_cog(MessageCount(bot))

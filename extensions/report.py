@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Any
 
 import discord
@@ -5,9 +21,7 @@ from discord import app_commands, ForumChannel, DMChannel, PartialMessageable
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from shared.config import Config
-
-config = Config.json_config
+from shared.transpeak_bot import TranspeakBot
 
 class ReportForm(discord.ui.Modal, title="Report Message"):
 
@@ -15,13 +29,13 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
     reports_over18_channel: ForumChannel
 
     @classmethod
-    async def ready(cls, bot: commands.Bot) -> None:
-        reports_channel = await bot.fetch_channel(config['ch_id']['#reports'])
+    async def ready(cls, bot: TranspeakBot) -> None:
+        reports_channel = await bot.fetch_channel(bot.config['ch_id']['#reports'])
         if not isinstance(reports_channel, ForumChannel):
             raise ValueError("reports channel is not a forum channel")
         cls.reports_channel = reports_channel
 
-        reports_over18_channel = await bot.fetch_channel(config['ch_id']['#reports-over18'])
+        reports_over18_channel = await bot.fetch_channel(bot.config['ch_id']['#reports-over18'])
         if not isinstance(reports_over18_channel, ForumChannel):
             raise ValueError("reports-over18 channel is not a forum channel")
         cls.reports_over18_channel = reports_over18_channel
@@ -36,11 +50,12 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
         required=False
     )
 
-    def __init__(self, message: discord.Message):
+    def __init__(self, message: discord.Message, bot: TranspeakBot):
         super().__init__()
         self.message = message
+        self.bot = bot
         if message.guild is None: raise RuntimeError("No guild for reported message")
-        self.staff_alert = message.guild.get_role(config['rl_id']['staff-alert'])
+        self.staff_alert = message.guild.get_role(self.bot.config['rl_id']['staff-alert'])
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
 
@@ -69,24 +84,23 @@ class ReportForm(discord.ui.Modal, title="Report Message"):
         await interaction.response.send_message("Report submitted! Staff may reach out if they need further information.", ephemeral=True)
         return None
 
-async def report_message(interaction: discord.Interaction, message: discord.Message) -> None:
-
-    server = interaction.guild
-    if not server: return None
-
-    await interaction.response.send_modal(ReportForm(message))
-    return None
-
-report_button = app_commands.ContextMenu(
-        name="Report Message",
-        callback=report_message
-    )
-
 class Report(commands.Cog):
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: TranspeakBot):
         self.bot = bot
+
+        report_button = app_commands.ContextMenu(
+            name="Report Message",
+            callback=self.report_message
+        )
         self.bot.tree.add_command(report_button)
+
+    async def report_message(self, interaction: discord.Interaction, message: discord.Message) -> None:
+        server = interaction.guild
+        if not server: return None
+
+        await interaction.response.send_modal(ReportForm(message, self.bot))
+        return None
 
     async def cog_load(self) -> None:
         await ReportForm.ready(self.bot)
@@ -94,6 +108,6 @@ class Report(commands.Cog):
     def cog_check(self, ctx: Context[Any]) -> bool:
         return ctx.guild is not None
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: TranspeakBot) -> None:
     await bot.add_cog(Report(bot))
     return None

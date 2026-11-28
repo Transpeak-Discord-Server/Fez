@@ -1,3 +1,19 @@
+# Fez/TransBot - A Discord.py bot for Transpeak
+# Copyright (C) 2026 Fez project contributors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import datetime
 
 from sqlalchemy import select, update, delete
@@ -130,6 +146,7 @@ class UserDAO:
         return watchlist.description
 
     async def set_watchlist(self, user_id: int, watchlist: str) -> str:
+        await self.ensure_user(user_id)
         user = tables.Watchlist(user_id=user_id, description=watchlist)
         await self.session.merge(user)
         return watchlist
@@ -146,6 +163,7 @@ class UserDAO:
         return sc.description
 
     async def set_special_considerations(self, user_id: int, sc: str) -> str:
+        await self.ensure_user(user_id)
         sc_entry = tables.SpecialConsiderations(user_id=user_id, description=sc)
         await self.session.merge(sc_entry)
         return sc
