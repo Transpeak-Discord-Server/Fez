@@ -20,6 +20,7 @@ import discord
 from discord import app_commands
 
 from shared.database.RoleDAO import RoleDAO
+from shared.database.UserDAO import UserDAO
 from shared.transpeak_bot import TranspeakBot
 from shared.utils.misc import require_server
 from shared.utils.permissions import permission_check, Level, has_permission
@@ -73,11 +74,14 @@ class Roles(app_commands.Group):
     @permission_check(Level.REGISTERED)
     async def add(self, interaction: discord.Interaction[TranspeakBot], roles: str, user: discord.Member | None = None) -> None:
         server = await require_server(interaction)
+
+        await interaction.response.defer(thinking=True)
+
         issuer = interaction.user
         assert isinstance(issuer, discord.Member)
 
         if user is not None and not has_permission(issuer, Level.HELPER):
-            await interaction.response.send_message("You do not have permission to set other users' roles!")
+            await interaction.followup.send("You do not have permission to set other users' roles!")
             return
 
         if user is None: user = issuer
@@ -86,7 +90,7 @@ class Roles(app_commands.Group):
 
         await user.add_roles(*roles_to_add,
                              reason=f"/roles add_roles used by {issuer.display_name} ({issuer.id})")
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"Roles added to {user.display_name}.{f" Could not add: {", ".join(could_not_add)}"  if len(could_not_add) != 0 else ""}")
 
     def get_user_roles(self, user: discord.Member) -> list[discord.Role]:
@@ -95,9 +99,11 @@ class Roles(app_commands.Group):
         # We want these roles to be removed by /roles set too, so we treat them the same as the identity roles
         interview_role_id = self.bot.config['rl_id']['interview']
         readrules_role_id = self.bot.config['rl_id']['readrules']
+        regular_role_id = self.bot.config['rl_id']['regular']
+        new_role_id = self.bot.config['rl_id']['new']
 
         for role in user.roles:
-            if role.id not in self.role_ids and role.id not in [interview_role_id, readrules_role_id]:
+            if role.id not in self.role_ids and role.id not in [interview_role_id, readrules_role_id, regular_role_id, new_role_id]:
                 continue
             roles.append(role)
 
@@ -108,11 +114,14 @@ class Roles(app_commands.Group):
     @permission_check(Level.REGISTERED)
     async def remove(self, interaction: discord.Interaction[TranspeakBot], roles: str, user: discord.Member | None = None) -> None:
         server = await require_server(interaction)
+
+        await interaction.response.defer(thinking=True)
+
         issuer = interaction.user
         assert isinstance(issuer, discord.Member)
 
         if user is not None and not has_permission(issuer, Level.HELPER):
-            await interaction.response.send_message("You do not have permission to set other users' roles!")
+            await interaction.followup.send("You do not have permission to set other users' roles!")
             return
 
         if user is None: user = issuer
@@ -120,7 +129,7 @@ class Roles(app_commands.Group):
         roles_to_remove, could_not_find = self.get_discord_roles(roles, server)
 
         await user.remove_roles(*roles_to_remove, reason=f"/roles remove used by {issuer.display_name} ({issuer.id})")
-        await interaction.response.send_message(f"Roles removed from {user.display_name}.{f"Could not add: {", ".join(could_not_find)}"  if len(could_not_find) != 0 else ""}")
+        await interaction.followup.send(f"Roles removed from {user.display_name}.{f"Could not add: {", ".join(could_not_find)}"  if len(could_not_find) != 0 else ""}")
 
     @app_commands.command()
     @app_commands.describe(roles='The roles to set, separated by spaces and/or commas.')
@@ -130,6 +139,8 @@ class Roles(app_commands.Group):
         issuer = interaction.user
         assert isinstance(issuer, discord.Member)
 
+        await interaction.response.defer(thinking=True)
+
         if user is None: user = issuer
 
         user_roles = self.get_user_roles(user)
@@ -137,9 +148,21 @@ class Roles(app_commands.Group):
 
         roles_to_add, could_not_add = self.get_discord_roles(roles, server)
 
+        async with self.bot.database.get_session() as session:
+            user_dao = UserDAO(session)
+            user_db = await user_dao.get_user_info(user.id)
+            user_msg_count = 0 if not user_db else user_db.message_count
+
+        if user_msg_count >= 500:
+            regular_role = server.get_role(self.bot.config['rl_id']['regular'])
+            if regular_role is not None: roles_to_add.append(regular_role)
+        else:
+            new_role = server.get_role(self.bot.config['rl_id']['new'])
+            if new_role is not None: roles_to_add.append(new_role)
+
         await user.add_roles(*roles_to_add,
                              reason=f"/roles add_roles used by {issuer.display_name} ({issuer.id})")
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"Roles added to {user.display_name}.{f" Could not add: {", ".join(could_not_add)}" if len(could_not_add) != 0 else ""}")
 
     @app_commands.command()
