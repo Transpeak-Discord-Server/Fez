@@ -146,6 +146,7 @@ class UserDAO:
         return watchlist.description
 
     async def set_watchlist(self, user_id: int, watchlist: str) -> str:
+        await self.ensure_user(user_id)
         user = tables.Watchlist(user_id=user_id, description=watchlist)
         await self.session.merge(user)
         return watchlist
@@ -162,6 +163,7 @@ class UserDAO:
         return sc.description
 
     async def set_special_considerations(self, user_id: int, sc: str) -> str:
+        await self.ensure_user(user_id)
         sc_entry = tables.SpecialConsiderations(user_id=user_id, description=sc)
         await self.session.merge(sc_entry)
         return sc
